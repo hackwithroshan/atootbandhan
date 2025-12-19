@@ -1,7 +1,7 @@
 import express from 'express';
 import { AuthRequest, protect as auth } from '../middlewares/auth.middleware.js';
 import Ticket from '../models/Ticket.js';
-import { SupportTicketStatus } from '../../../types.js';
+import { SupportTicketStatus } from '../../types.js';
 
 const router = express.Router();
 router.use(auth);

@@ -3,7 +3,7 @@ import { Request, Response, NextFunction } from 'express';
 import jwt from 'jsonwebtoken';
 
 // Extend Express Request type to include user property
-// FIX: Changed from `extends ExpressRequest` to `extends Request` and updated the import. This ensures AuthRequest correctly inherits properties like .headers, .body, and .params from the base Express Request type.
+// FIX: Changed from extends ExpressRequest to extends Request and updated the import. This ensures AuthRequest correctly inherits properties like .headers, .body, and .params from the base Express Request type.
 export interface AuthRequest extends Request {
   user?: {
     id: string;

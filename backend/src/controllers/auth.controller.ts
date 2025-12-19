@@ -106,7 +106,7 @@ export const verifyOtp = async (req: Request, res: Response, next: NextFunction)
 
     // Sign JWT
     // FIX: Property 'id' does not exist on type 'IUser'. Use '_id' instead.
-    const payload = { user: { id: user._id } };
+    const payload = { user: { id: user.id } };
     // FIX: No overload matches this call. Ensure JWT_SECRET is defined before use.
     if (!process.env.JWT_SECRET) {
         throw new Error('JWT_SECRET not defined');
@@ -158,7 +158,7 @@ export const login = async (req: Request, res: Response, next: NextFunction) => 
     await user.save();
     
     // FIX: Property 'id' does not exist on type 'IUser'. Use '_id' instead.
-    const payload = { user: { id: user._id } };
+    const payload = { user: { id: user.id } };
     // FIX: No overload matches this call. Ensure JWT_SECRET is defined before use.
     if (!process.env.JWT_SECRET) {
         throw new Error('JWT_SECRET not defined');

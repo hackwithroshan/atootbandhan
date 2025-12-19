@@ -1,6 +1,6 @@
 import mongoose, { Schema, Document, Model } from 'mongoose';
 import bcrypt from 'bcryptjs';
-import { AdminRole, Gender, MaritalStatus, Religion, MotherTongue, EducationLevel, OccupationCategory, HeightUnit, WeightUnit, ManglikStatus, ProfileCreatedBy, FamilyType, FamilyValues, DietaryHabits, YesNoOccasionally, MembershipTier, UserStatus } from '../../../types.js';
+import { AdminRole, Gender, MaritalStatus, Religion, MotherTongue, EducationLevel, OccupationCategory, HeightUnit, WeightUnit, ManglikStatus, ProfileCreatedBy, FamilyType, FamilyValues, DietaryHabits, YesNoOccasionally, MembershipTier, UserStatus } from '../../types.js';
 
 // Define the interface for the User document
 export interface IUser extends Document {
@@ -164,8 +164,8 @@ const UserSchema: Schema = new Schema({
 }, { timestamps: true });
 
 // FIX: This expression is not callable. The type of `next` was being incorrectly inferred.
-// Explicitly typing `this` and `next` resolves the issue.
-UserSchema.pre<IUser>('save', async function (this: IUser, next: (err?: Error) => void) {
+// Explicitly typing `this` and `next` resolves the issue, and brings isModified into scope.
+UserSchema.pre<IUser>('save', async function (this: IUser & Document, next: (err?: Error) => void) {
   if (!this.isModified('password') || !this.password) return next();
   const salt = await bcrypt.genSalt(10);
   this.password = await bcrypt.hash(this.password, salt);

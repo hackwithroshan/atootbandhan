@@ -5,7 +5,7 @@ import Interest from '../models/Interest.js';
 import Notification from '../models/Notification.js';
 import Conversation from '../models/Conversation.js';
 import Message from '../models/Message.js';
-import { InterestStatus, NotificationType } from '../../../types.js';
+import { InterestStatus, NotificationType } from '../../types.js';
 
 const router = express.Router();
 

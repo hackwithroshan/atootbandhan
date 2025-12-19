@@ -1,5 +1,5 @@
 import mongoose, { Schema, Document, Model } from 'mongoose';
-import { InterestStatus } from '../../../types.js';
+import { InterestStatus } from '../../types.js';
 
 export interface IInterest extends Document {
   fromUser: mongoose.Types.ObjectId;

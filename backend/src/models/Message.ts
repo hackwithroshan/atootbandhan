@@ -1,5 +1,5 @@
 import mongoose, { Schema, Document, Model } from 'mongoose';
-import { ChatMessageStatus } from '../../../types.js';
+import { ChatMessageStatus } from '../../types.js';
 
 export interface IMessage extends Document {
   conversation: mongoose.Types.ObjectId;

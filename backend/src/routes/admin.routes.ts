@@ -6,7 +6,7 @@ import User from '../models/User.js';
 import SuccessStory from '../models/SuccessStory.js';
 import Ticket from '../models/Ticket.js';
 import { setupDatabase } from '../utils/setup.js';
-import { SupportTicketStatus, UserStatus } from '../../../types.js';
+import { SupportTicketStatus, UserStatus } from '../../types.js';
 
 const router = express.Router();
 

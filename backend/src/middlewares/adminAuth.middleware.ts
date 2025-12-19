@@ -1,7 +1,7 @@
 import { Response, NextFunction } from 'express';
 import { AuthRequest } from './auth.middleware.js'; 
 import User from '../models/User.js';
-import { AdminRole } from '../../../types.js';
+import { AdminRole } from '../../types.js';
 
 const adminAuth = async (req: AuthRequest, res: Response, next: NextFunction) => {
   try {

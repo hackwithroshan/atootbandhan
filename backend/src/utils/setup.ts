@@ -1,7 +1,7 @@
 import Plan from '../models/Plan.js';
 import Faq from '../models/Faq.js';
 import SuccessStory from '../models/SuccessStory.js';
-import { MembershipTier } from '../../../types.js';
+import { MembershipTier } from '../../types.js';
 
 export const setupDatabase = async () => {
     console.log('Starting database setup...');

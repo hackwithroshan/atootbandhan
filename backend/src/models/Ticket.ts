@@ -1,5 +1,5 @@
 import mongoose, { Schema, Document, Model } from 'mongoose';
-import { SupportTicketCategory, SupportTicketStatus } from '../../../types.js';
+import { SupportTicketCategory, SupportTicketStatus } from '../../types.js';
 
 const MessageSchema = new Schema({
   sender: { type: String, enum: ['user', 'admin'], required: true },

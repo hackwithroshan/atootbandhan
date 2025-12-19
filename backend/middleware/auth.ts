@@ -1,7 +1,8 @@
 import express from 'express';
 // FIX: Corrected import path for AuthRequest.
 import { AuthRequest } from '../src/middlewares/auth.middleware.js'; 
-import User from '../src/models/User.js'; // FIX: Corrected import path for User model
+// FIX: Corrected import path for User model
+import User from '../src/models/User.js'; 
 import { AdminRole } from '../../types.js';
 
 // FIX: Use express.Response and express.NextFunction

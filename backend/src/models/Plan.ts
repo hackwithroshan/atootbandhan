@@ -1,5 +1,5 @@
 import mongoose, { Schema, Document, Model } from 'mongoose';
-import { MembershipTier } from '../../../types.js';
+import { MembershipTier } from '../../types.js';
 
 export interface IPlan extends Document {
   name: MembershipTier;

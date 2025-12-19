@@ -1,5 +1,5 @@
 import mongoose, { Schema, Document, Model } from 'mongoose';
-import { NotificationType } from '../../../types.js';
+import { NotificationType } from '../../types.js';
 
 export interface INotification extends Document {
   user: mongoose.Types.ObjectId;

@@ -9,11 +9,14 @@ interface EmailOptions {
 
 const sendEmail = async ({ to, subject, html }: EmailOptions) => {
   const mailProvider = process.env.MAIL_PROVIDER?.toLowerCase();
-  const from = process.env.MAIL_FROM;
+  const fromEmail = process.env.MAIL_FROM;
 
-  if (!from) {
+  if (!fromEmail) {
     throw new Error('MAIL_FROM is not defined in environment variables.');
   }
+
+  // Use a more professional "from" format to improve deliverability
+  const from = `Atut Bandhan <${fromEmail}>`;
 
   if (mailProvider === 'resend') {
     // --- Using Resend ---

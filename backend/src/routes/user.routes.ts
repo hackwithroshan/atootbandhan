@@ -2,7 +2,7 @@ import express from 'express';
 import { AuthRequest, protect as auth } from '../middlewares/auth.middleware.js';
 import User from '../models/User.js';
 import Interest from '../models/Interest.js';
-import { Gender, UserStatus, InterestStatus } from '../../../types.js';
+import { Gender, UserStatus, InterestStatus } from '../../types.js';
 
 const router = express.Router();
 
