@@ -1,0 +1,9 @@
+{
+  "name": "atoot bandhan",
+  "description": "A modern matrimonial platform for serious relationships. Features include multi-step signup, secure login, social login options, a comprehensive user dashboard with profile management, match suggestions, and activity tracking.",
+  "requestFramePermissions": [
+    "camera",
+    "microphone"
+  ],
+  "prompt": ""
+}
