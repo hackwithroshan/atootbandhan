@@ -1,4 +1,6 @@
 import React, { useState, useCallback, useContext, createContext, ReactNode } from 'react';
+import { io, Socket } from 'socket.io-client';
+import { API_URL } from '../utils/config';
 
 type ToastType = 'success' | 'error' | 'info';
 
@@ -54,6 +56,36 @@ export const useToastManager = () => {
     const context = useContext(ToastManagementContext);
     if (context === undefined) {
         throw new Error('useToastManager must be used within a ToastProvider');
+    }
+    return context;
+};
+
+// --- Socket.IO Context ---
+const SocketContext = createContext<Socket | undefined>(undefined);
+
+// A single socket instance for the entire app
+const socket = io(API_URL, {
+    autoConnect: true,
+    reconnection: true,
+});
+
+socket.on('connect', () => console.log('Socket connected:', socket.id));
+socket.on('disconnect', () => console.log('Socket disconnected'));
+socket.on('connect_error', (err) => console.error('Socket connection error:', err.message));
+
+
+export const SocketProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
+    return (
+        <SocketContext.Provider value={socket}>
+            {children}
+        </SocketContext.Provider>
+    );
+};
+
+export const useSocket = () => {
+    const context = useContext(SocketContext);
+    if (context === undefined) {
+        throw new Error('useSocket must be used within a SocketProvider');
     }
     return context;
 };

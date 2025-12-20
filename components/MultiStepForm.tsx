@@ -10,7 +10,6 @@ interface MultiStepFormProps {
   steps: FormStep[];
   children: ReactElement[];
   onFormSubmit: (e: React.FormEvent) => void;
-  // FIX: Allow validateStep to be an async function.
   validateStep: (step: number) => boolean | Promise<boolean>;
   currentStep: number;
   setCurrentStep: (step: number | ((prevStep: number) => number)) => void;
@@ -19,7 +18,6 @@ interface MultiStepFormProps {
 const MultiStepForm: React.FC<MultiStepFormProps> = ({ steps, children, onFormSubmit, validateStep, currentStep, setCurrentStep }) => {
   const totalSteps = steps.length;
 
-  // FIX: Make handleNext async to await the validation.
   const handleNext = useCallback(async () => {
     const isValid = await validateStep(currentStep);
     if (isValid) {

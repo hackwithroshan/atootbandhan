@@ -8,7 +8,6 @@ import Button from '../components/ui/Button';
 import { AdminRole, LoggedInUserSessionData } from '../types'; 
 
 interface AuthPageProps {
-  // Corrected the type for `onAuthSuccess` to match the implementation in parent and child components.
   onAuthSuccess: (authData: { token: string }) => void; 
   onClose: () => void; 
 }

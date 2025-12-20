@@ -7,7 +7,8 @@ import { PencilIcon } from '../../icons/PencilIcon';
 import { TrashIcon } from '../../icons/TrashIcon';
 import { PlusCircleIcon } from '../../icons/PlusCircleIcon';
 import { PhonebookContact } from '../../../types';
-import { API_URL } from '../../../utils/config';
+import apiClient from '../../../utils/apiClient';
+import { useToast } from '../../../hooks/useToast';
 
 
 const PhonebookView: React.FC = () => {
@@ -15,51 +16,56 @@ const PhonebookView: React.FC = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [editingContactNotes, setEditingContactNotes] = useState<{ id: string; notes: string } | null>(null);
+  const { showToast } = useToast();
 
   useEffect(() => {
     const fetchContacts = async () => {
       setIsLoading(true);
       setError(null);
-      const token = localStorage.getItem('token');
       try {
-        const res = await fetch(`${API_URL}/api/users/phonebook`, { headers: { 'x-auth-token': token || '' } });
-        if (!res.ok) throw new Error('Failed to fetch phonebook contacts.');
-        const data = await res.json();
+        const data = await apiClient('/api/users/phonebook');
         setContacts(data);
       } catch (err: any) {
         setError(err.message);
+        showToast(err.message, 'error');
       } finally {
         setIsLoading(false);
       }
     };
     fetchContacts();
-  }, []);
+  }, [showToast]);
 
   const handleRemoveContact = (contactId: string) => {
-    if (window.confirm('Are you sure you want to remove this contact from your phonebook?')) {
-      // TODO: API call to remove contact
-      setContacts(prev => prev.filter(contact => contact.id !== contactId));
-      alert('Contact removed. (Mock)');
-    }
+    showToast('This feature is coming soon!', 'info');
   };
 
   const handleOpenNotesModal = (contact: PhonebookContact) => {
     setEditingContactNotes({ id: contact.id, notes: contact.notes || '' });
   };
 
-  const handleSaveNotes = () => {
+  const handleSaveNotes = async () => {
     if (editingContactNotes) {
-      // TODO: API call to save notes
-      setContacts(prev => prev.map(contact => 
-        contact.id === editingContactNotes.id ? { ...contact, notes: editingContactNotes.notes } : contact
-      ));
-      alert('Notes saved. (Mock)');
-      setEditingContactNotes(null);
+      try {
+        await apiClient('/api/users/phonebook/notes', {
+            method: 'PUT',
+            body: {
+                contactId: editingContactNotes.id,
+                notes: editingContactNotes.notes,
+            },
+        });
+        setContacts(prev => prev.map(contact => 
+            contact.id === editingContactNotes.id ? { ...contact, notes: editingContactNotes.notes } : contact
+        ));
+        showToast('Notes saved successfully!', 'success');
+        setEditingContactNotes(null);
+      } catch(err: any) {
+        showToast(err.message, 'error');
+      }
     }
   };
   
   const handleAddContact = () => {
-      alert("Navigate to a user's profile to add them to your phonebook (mock).");
+      showToast("Navigate to a user's profile to add them (Coming soon).", 'info');
   };
 
   return (

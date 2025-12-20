@@ -1,6 +1,6 @@
 import mongoose, { Schema, Document, Model } from 'mongoose';
 import bcrypt from 'bcryptjs';
-import { AdminRole, Gender, MaritalStatus, Religion, MotherTongue, EducationLevel, OccupationCategory, HeightUnit, WeightUnit, ManglikStatus, ProfileCreatedBy, FamilyType, FamilyValues, DietaryHabits, YesNoOccasionally, MembershipTier, UserStatus } from '../../types.js';
+import { AdminRole, Gender, MaritalStatus, Religion, MotherTongue, EducationLevel, OccupationCategory, HeightUnit, WeightUnit, ManglikStatus, ProfileCreatedBy, FamilyType, FamilyValues, DietaryHabits, YesNoOccasionally, MembershipTier, UserStatus } from '../../../types.js';
 
 // Define the interface for the User document
 export interface IUser extends Document {
@@ -71,6 +71,7 @@ export interface IUser extends Document {
   membershipTier: MembershipTier;
   profileCompletion: number;
   shortlistedProfiles: mongoose.Types.ObjectId[];
+  contactNotes: Map<string, string>;
   lastLoginDate?: Date;
   lastLoginIP?: string;
   internalNotes?: string;
@@ -79,6 +80,9 @@ export interface IUser extends Document {
   suspensionReason?: string;
   suspensionEndDate?: Date;
   banReason?: string;
+  deletionReason?: string;
+  deletionExpiresAt?: Date;
+  deletedBy?: { id: mongoose.Types.ObjectId, name: string };
   loginActivity?: object[];
   resetPasswordOtp?: string;
   resetPasswordOtpExpires?: Date;
@@ -150,6 +154,7 @@ const UserSchema: Schema = new Schema({
     membershipTier: { type: String, enum: Object.values(MembershipTier), default: MembershipTier.FREE },
     profileCompletion: { type: Number, default: 0 },
     shortlistedProfiles: [{ type: Schema.Types.ObjectId, ref: 'User' }],
+    contactNotes: { type: Map, of: String, default: {} },
     lastLoginDate: { type: Date },
     lastLoginIP: { type: String },
     internalNotes: { type: String },
@@ -158,13 +163,35 @@ const UserSchema: Schema = new Schema({
     suspensionReason: { type: String },
     suspensionEndDate: { type: Date },
     banReason: { type: String },
+    deletionReason: { type: String },
+    deletionExpiresAt: { type: Date },
+    deletedBy: {
+        id: { type: Schema.Types.ObjectId, ref: 'User' },
+        name: String,
+    },
     loginActivity: [Object],
     resetPasswordOtp: { type: String, select: false },
     resetPasswordOtpExpires: { type: Date, select: false },
-}, { timestamps: true });
+}, { 
+    timestamps: true,
+    toJSON: {
+        virtuals: true,
+        transform: (doc, ret) => {
+          ret.id = ret._id;
+          delete ret._id;
+          delete ret.__v;
+        }
+    },
+    toObject: {
+        virtuals: true,
+        transform: (doc, ret) => {
+          ret.id = ret._id;
+          delete ret._id;
+          delete ret.__v;
+        }
+    }
+});
 
-// FIX: This expression is not callable. The type of `next` was being incorrectly inferred.
-// Explicitly typing `this` and `next` resolves the issue, and brings isModified into scope.
 UserSchema.pre<IUser>('save', async function (this: IUser & Document, next: (err?: Error) => void) {
   if (!this.isModified('password') || !this.password) return next();
   const salt = await bcrypt.genSalt(10);

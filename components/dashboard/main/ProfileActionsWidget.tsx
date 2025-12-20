@@ -2,11 +2,18 @@ import React from 'react';
 import Button from '../../ui/Button';
 import { ArrowDownTrayIcon } from '../../icons/ArrowDownTrayIcon';
 import { Cog6ToothIcon } from '../../icons/Cog6ToothIcon'; // Example for other actions
+import { DashboardViewKey } from '../../../types';
+import { useToast } from '../../../hooks/useToast';
 
-const ProfileActionsWidget: React.FC = () => {
+interface ProfileActionsWidgetProps {
+  setActiveView: (viewKey: DashboardViewKey) => void;
+}
+
+const ProfileActionsWidget: React.FC<ProfileActionsWidgetProps> = ({ setActiveView }) => {
+  const { showToast } = useToast();
+  
   const handleDownloadPdf = () => {
-    console.log('Mock: Downloading Profile as PDF...');
-    alert('Mock: Your profile PDF would start downloading now.');
+    showToast('This feature is coming soon!', 'info');
   };
 
   return (
@@ -27,11 +34,11 @@ const ProfileActionsWidget: React.FC = () => {
         {/* Placeholder for other actions */}
         <Button 
           variant="secondary" 
-          onClick={() => console.log("Account Settings clicked")} 
+          onClick={() => setActiveView('AccountSettings')} 
           className="w-full !justify-start !text-sm"
         >
           <Cog6ToothIcon className="w-5 h-5 mr-3 text-gray-500" />
-          Account Settings (Mock)
+          Account Settings
         </Button>
       </div>
       <p className="text-xs text-gray-400 mt-4">

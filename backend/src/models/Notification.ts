@@ -1,5 +1,5 @@
 import mongoose, { Schema, Document, Model } from 'mongoose';
-import { NotificationType } from '../../types.js';
+import { NotificationType } from '../../../types.js';
 
 export interface INotification extends Document {
   user: mongoose.Types.ObjectId;
@@ -19,7 +19,25 @@ const NotificationSchema: Schema<INotification> = new Schema({
   isRead: { type: Boolean, default: false },
   redirectTo: { type: String },
   senderProfile: { type: Schema.Types.ObjectId, ref: 'User' },
-}, { timestamps: true });
+}, { 
+  timestamps: true,
+  toJSON: {
+    virtuals: true,
+    transform: (doc, ret) => {
+      ret.id = ret._id;
+      delete ret._id;
+      delete ret.__v;
+    }
+  },
+  toObject: {
+    virtuals: true,
+    transform: (doc, ret) => {
+      ret.id = ret._id;
+      delete ret._id;
+      delete ret.__v;
+    }
+  }
+});
 
 const Notification: Model<INotification> = mongoose.model<INotification>('Notification', NotificationSchema);
 export default Notification;

@@ -15,11 +15,17 @@ const apiClient = async (
   endpoint: string,
   { body, ...customConfig }: ApiClientOptions = {}
 ): Promise<any> => {
-  const token = localStorage.getItem('token');
+  const isExternal = endpoint.startsWith('http');
+  const url = isExternal ? endpoint : `${API_URL}${endpoint}`;
+  
   const headers: HeadersInit = { 'Content-Type': 'application/json' };
 
-  if (token) {
-    headers['x-auth-token'] = token;
+  // Only add the auth token for internal API calls
+  if (!isExternal) {
+    const token = localStorage.getItem('token');
+    if (token) {
+      headers['x-auth-token'] = token;
+    }
   }
 
   const config: RequestInit = {
@@ -33,6 +39,7 @@ const apiClient = async (
 
   if (body) {
     if (body instanceof FormData) {
+      // The browser will set the 'Content-Type' header with the correct boundary for FormData
       delete (config.headers as any)['Content-Type'];
       config.body = body;
     } else {
@@ -40,15 +47,23 @@ const apiClient = async (
     }
   }
 
-  const url = endpoint.startsWith('http') ? endpoint : `${API_URL}${endpoint}`;
-
   try {
     const response = await fetch(url, config);
 
     if (response.ok) {
       const contentType = response.headers.get('content-type');
       if (response.status === 204 || !contentType || !contentType.includes('application/json')) {
-        return; 
+        // For Cloudinary success, it returns JSON, but we check just in case
+        // If no content or not json, return the response object for further handling if needed.
+        // For this specific app, returning nothing on 204 is fine.
+        if (response.status === 204) return;
+        // For Cloudinary, we need the JSON response even if content-type is not perfectly set.
+        try {
+          return await response.json();
+        } catch (e) {
+          // If it truly isn't JSON, return nothing.
+          return;
+        }
       }
       return await response.json();
     }
@@ -56,7 +71,7 @@ const apiClient = async (
     let errorMessage = `An unexpected error occurred. (Status: ${response.status})`;
     try {
       const errorData = await response.json();
-      errorMessage = errorData.msg || errorData.message || (errorData.errors ? JSON.stringify(errorData.errors) : errorMessage);
+      errorMessage = errorData.msg || errorData.message || (errorData.errors ? JSON.stringify(errorData.errors) : (errorData.error ? errorData.error.message : errorMessage));
     } catch (e) {
       const textResponse = await response.text();
       if (textResponse.toLowerCase().includes('gateway')) {

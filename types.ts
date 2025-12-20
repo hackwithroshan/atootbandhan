@@ -1,5 +1,45 @@
 
 
+
+
+export enum DiscountType {
+  PERCENTAGE = 'Percentage',
+  FIXED = 'Fixed',
+}
+
+export interface Coupon {
+  id: string;
+  code: string;
+  discountType: DiscountType;
+  discountValue: number;
+  expiryDate?: string;
+  status: 'Active' | 'Expired' | 'Disabled';
+  createdAt: string;
+}
+
+export interface BlogPost {
+  id: string;
+  title: string;
+  excerpt: string;
+  imageUrl: string;
+  content: string;
+  category: string;
+  seoTags: string[];
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface StaticPage {
+  id: string;
+  slug: string;
+  title: string;
+  content: string;
+  metaTitle?: string;
+  metaDescription?: string;
+  updatedAt: string;
+}
+
+
 export enum Gender {
   MALE = 'Male',
   FEMALE = 'Female',
@@ -335,6 +375,11 @@ export interface SupportTicketMessage {
   sender: 'user' | 'admin';
   text: string;
   timestamp: string;
+  file?: {
+    url: string;
+    name: string;
+    type: 'image' | 'file';
+  };
 }
 
 export interface SupportTicket {
@@ -391,7 +436,8 @@ export enum UserStatus {
   INACTIVE = 'Inactive', 
   PENDING_APPROVAL = 'Pending Approval', 
   SUSPENDED = 'Suspended', 
-  BANNED = 'Banned', 
+  BANNED = 'Banned',
+  DELETED = 'Deleted',
 }
 
 export interface LoginAttempt {
@@ -522,6 +568,7 @@ export interface AdminManagedUser extends SignupFormData {
   internalNotes?: string;
   adminTags?: string[];
   isVerified?: boolean; 
+  isVerifiedByAdmin?: boolean;
   suspensionReason?: string;
   suspensionEndDate?: string; 
   banReason?: string;
@@ -535,6 +582,11 @@ export interface AdminManagedUser extends SignupFormData {
   isVideoVerified?: boolean; // New
   isAiTrusted?: boolean; // New
   lastActivity?: string; // New
+  role: AdminRole | 'user';
+  deletionReason?: string;
+  deletionExpiresAt?: string;
+  deletedBy?: { name: string; };
+  updatedAt?: string;
 }
 
 // Notification System Types
@@ -564,6 +616,150 @@ export interface Notification {
     photoUrl?: string;
   };
 }
+
+export interface NotificationCampaignLog {
+  id: string;
+  campaignTitle: string;
+  channel: 'Email' | 'SMS' | 'Both';
+  targetAudience: {
+    location?: string;
+    gender?: string;
+    caste?: string;
+    membership?: string;
+  };
+  status: 'Sent' | 'Scheduled' | 'Failed' | 'Draft';
+  createdAt: string;
+  scheduledTime?: string;
+}
+
+export interface AutomatedReminderRule {
+    id: string;
+    rule: string;
+    delayInDays: number;
+    isActive: boolean;
+}
+
+export interface AnnouncementBanner {
+    id: string;
+    text: string;
+    expiryDate?: string;
+}
+
+// Admin Analytics
+export interface AnalyticsStats {
+  dailySignups: number;
+  dailyActiveUsers: number;
+  dailyLogins: number;
+  matchViewCountsToday: number;
+  photoUploadsToday: number;
+  paymentConversionRate: string;
+  bounceRate: string;
+  avgSessionDuration: string;
+  suspiciousLogins: LoginAttempt[];
+}
+
+export interface TopSearchTerm {
+    _id: string;
+    count: number;
+}
+
+export interface SearchAnalyticsData {
+    topKeywords: TopSearchTerm[];
+    topCities: TopSearchTerm[];
+    topCastes: TopSearchTerm[];
+    topReligions: TopSearchTerm[];
+    zeroResultSearches: TopSearchTerm[];
+}
+
+export interface ABTest {
+  id: string;
+  name: string;
+  description: string;
+  status: 'Running' | 'Paused' | 'Completed' | 'Draft';
+  testGroup: string;
+  metricsTracked: string[];
+  results: {
+    variantA: { views: number; conversions: number };
+    variantB: { views: number; conversions: number };
+  };
+  startDate: string;
+  endDate?: string;
+}
+
+export interface Affiliate {
+  id: string;
+  name: string;
+  referralCode: string;
+  usersJoined: number;
+  commissionRate: string;
+  totalRevenueGenerated: number;
+  status: 'Active' | 'Inactive';
+  expiryDate?: string;
+  createdAt: string;
+}
+
+export interface UserReferral {
+  id: string;
+  user: {
+    fullName: string;
+    email: string;
+  };
+  referredBy: string; // affiliate code or user id
+  joinDate: string;
+  status: 'Pending' | 'Credited'; // Bonus status
+}
+
+export interface SiteSettings {
+  id?: string;
+  siteTitle: string;
+  homepageBannerText: string;
+  homepageCtaText: string;
+  platformLogoUrl?: string;
+  faviconUrl?: string;
+  ogImageUrl?: string;
+  defaultMetaTitle: string;
+  defaultMetaDescription: string;
+  contactEmail: string;
+  contactMobile?: string;
+  horoscopeMatchingEnabled: boolean;
+  privatePhotosEnabled: boolean;
+  blogModuleEnabled: boolean;
+  successStoryModuleEnabled: boolean;
+  paymentGatewayKey?: string;
+  paymentGatewaySecret?: string;
+  maintenanceMode: boolean;
+  referralBonus: number | string;
+}
+
+export interface AdminAuditLog {
+  id: string;
+  adminId: string;
+  adminName: string;
+  action: string;
+  targetType?: string;
+  targetId?: string;
+  details: string;
+  ipAddress?: string;
+  createdAt: string;
+}
+
+export interface PlanFeature {
+  text: string;
+  included: boolean;
+}
+
+export interface Plan {
+  id: string;
+  name: MembershipTier;
+  priceMonthlyDisplay: string;
+  priceMonthly: number;
+  priceYearlyDisplay?: string;
+  priceYearly?: number;
+  highlight?: boolean;
+  features: PlanFeature[];
+  cta: string;
+}
+
 
 // Offer Popup Types
 export interface Offer {

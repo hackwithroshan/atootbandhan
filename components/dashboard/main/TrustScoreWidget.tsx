@@ -5,6 +5,8 @@ import { CheckBadgeIcon } from '../../icons/CheckBadgeIcon';
 import { InformationCircleIcon } from '../../icons/InformationCircleIcon';
 import { CheckIcon } from '../../icons/CheckIcon'; // For completed items
 import { XCircleIcon } from '../../icons/XCircleIcon'; // For pending items
+import { UserProfileData, DashboardViewKey } from '../../../types';
+import { useToast } from '../../../hooks/useToast';
 
 interface TrustFactorProps {
   label: string;
@@ -33,32 +35,30 @@ const TrustFactorItem: React.FC<TrustFactorProps> = ({ label, isCompleted, actio
 
 interface TrustScoreWidgetProps {
     profileCompletion: number;
-    // In a real app, you'd pass more props like isEmailVerified, isIdVerified etc.
+    userProfile: Partial<UserProfileData & { isVerified: boolean, profilePhotoUrl: string }>;
+    setActiveView: (viewKey: DashboardViewKey) => void;
 }
 
-const TrustScoreWidget: React.FC<TrustScoreWidgetProps> = ({ profileCompletion }) => {
-  // Mock other verifications for now
-  const isEmailVerified = true;
-  const isMobileVerified = true;
-  const isPhotoUploaded = true;
-  const isIdVerified = false;
+const TrustScoreWidget: React.FC<TrustScoreWidgetProps> = ({ profileCompletion, userProfile, setActiveView }) => {
+  const { showToast } = useToast();
+  const isEmailVerified = userProfile?.isVerified || false;
+  const isPhotoUploaded = !!userProfile?.profilePhotoUrl;
+  const isIdVerified = false; // This remains mock as backend doesn't provide it yet.
 
   const factors = [
-    { completed: isPhotoUploaded, points: 20 },
-    { completed: isEmailVerified, points: 15 },
-    { completed: isMobileVerified, points: 15 },
-    { completed: profileCompletion > 90, points: 25 },
+    { completed: isPhotoUploaded, points: 25 },
+    { completed: isEmailVerified, points: 20 },
+    { completed: profileCompletion > 90, points: 30 },
     { completed: isIdVerified, points: 25 },
   ];
 
   const score = factors.reduce((total, factor) => total + (factor.completed ? factor.points : 0), 0);
 
   const trustFactors = [
-    { label: 'Photo Uploaded', isCompleted: isPhotoUploaded },
+    { label: 'Photo Uploaded', isCompleted: isPhotoUploaded, actionText: 'Upload', onAction: () => setActiveView('MyProfile') },
     { label: 'Email Verified', isCompleted: isEmailVerified },
-    { label: 'Mobile Verified', isCompleted: isMobileVerified },
-    { label: `Profile ${profileCompletion}% Complete`, isCompleted: profileCompletion > 90, actionText: 'Complete Now', onAction: () => console.log('Complete profile now') },
-    { label: 'ID Verified', isCompleted: isIdVerified, actionText: 'Verify ID', onAction: () => console.log('Verify ID now') },
+    { label: `Profile ${profileCompletion}% Complete`, isCompleted: profileCompletion > 90, actionText: 'Complete Now', onAction: () => setActiveView('MyProfile') },
+    { label: 'ID Verified', isCompleted: isIdVerified, actionText: 'Verify ID', onAction: () => showToast('ID Verification feature is coming soon!', 'info') },
   ];
 
   return (
@@ -71,7 +71,7 @@ const TrustScoreWidget: React.FC<TrustScoreWidgetProps> = ({ profileCompletion }
         {score > 70 && (
           <div className="flex items-center text-sm font-medium text-green-600 bg-green-100 px-3 py-1 rounded-full">
             <CheckBadgeIcon className="w-5 h-5 mr-1" />
-            Verified Member (Mock)
+            Trusted Member
           </div>
         )}
       </div>
@@ -95,9 +95,6 @@ const TrustScoreWidget: React.FC<TrustScoreWidgetProps> = ({ profileCompletion }
           ))}
         </ul>
       </div>
-      <Button variant="primary" className="w-full mt-5 !bg-rose-500 hover:!bg-rose-600">
-        Improve Trust Score
-      </Button>
     </div>
   );
 };

@@ -1,13 +1,14 @@
-
 import React from 'react';
 import { MatchProfile } from '../../../types';
 import Button from '../../ui/Button';
 
 interface SuggestedMatchesProps {
   matches: MatchProfile[];
+  onViewProfile: (profile: MatchProfile) => void;
+  onSendInterest: (profileId: string) => void;
 }
 
-const SuggestedMatches: React.FC<SuggestedMatchesProps> = ({ matches }) => {
+const SuggestedMatches: React.FC<SuggestedMatchesProps> = ({ matches, onViewProfile, onSendInterest }) => {
   return (
     <div className="bg-white p-6 rounded-lg shadow-lg">
       <h2 className="text-xl font-semibold text-gray-800 mb-4">Suggested Matches for You</h2>
@@ -19,8 +20,8 @@ const SuggestedMatches: React.FC<SuggestedMatchesProps> = ({ matches }) => {
               <h3 className="font-semibold text-gray-800">{profile.name}</h3>
               <p className="text-xs text-gray-500">{profile.age} yrs, {profile.location}</p>
               <div className="mt-3 flex justify-around">
-                  <Button size="sm" variant="secondary" className="!text-xs">View Profile</Button>
-                  <Button size="sm" variant="primary" className="!text-xs !bg-rose-500">Interest</Button>
+                  <Button size="sm" variant="secondary" className="!text-xs" onClick={() => onViewProfile(profile)}>View Profile</Button>
+                  <Button size="sm" variant="primary" className="!text-xs !bg-rose-500" onClick={() => onSendInterest(profile.id)}>Interest</Button>
               </div>
             </div>
           ))}

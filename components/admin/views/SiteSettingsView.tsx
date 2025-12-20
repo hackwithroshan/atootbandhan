@@ -1,52 +1,61 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useCallback, ChangeEvent, FormEvent } from 'react';
 import { Cog6ToothIcon } from '../../icons/Cog6ToothIcon';
 import Button from '../../ui/Button';
 import Input from '../../ui/Input';
+import { SiteSettings } from '../../../types';
+import apiClient from '../../../utils/apiClient';
+import { useToast } from '../../../hooks/useToast';
 
 const SiteSettingsView: React.FC = () => {
-  const [settings, setSettings] = useState({
-    siteTitle: 'Atut Bandhan - Your Trusted Matrimony',
-    platformLogo: null as File | null,
-    favicon: null as File | null,
-    ogImage: null as File | null, // New
-    appMetaDetails: 'Find your perfect life partner with Atut Bandhan...', // New
-    contactEmail: 'support@atutbandhan.com',
-    contactMobile: '+91-9876543210',
-    horoscopeMatchingEnabled: true,
-    privatePhotosEnabled: true,
-    blogModuleEnabled: true, // Example of granular module
-    successStoryModuleEnabled: true, // Example
-    paymentGatewayKey: 'pk_test_yourrazorpaykey', // Example
-    paymentGatewaySecret: 'rzp_test_yoursecret', // Example
-    maintenanceMode: false,
-    referralBonus: '200',
-  });
+  const [settings, setSettings] = useState<SiteSettings | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
+  const { showToast } = useToast();
 
-  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+  const fetchSettings = useCallback(async () => {
+    setIsLoading(true);
+    try {
+      const data = await apiClient('/api/admin/site-settings');
+      setSettings(data);
+    } catch (err: any) {
+      showToast(err.message, 'error');
+    } finally {
+      setIsLoading(false);
+    }
+  }, [showToast]);
+
+  useEffect(() => {
+    fetchSettings();
+  }, [fetchSettings]);
+
+  const handleInputChange = (e: ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+    if (!settings) return;
     const { name, value, type } = e.target;
     const checked = (e.target as HTMLInputElement).checked;
-    setSettings(prev => ({ ...prev, [name]: type === 'checkbox' ? checked : value }));
+    setSettings(prev => prev ? ({ ...prev, [name]: type === 'checkbox' ? checked : value }) : null);
   };
 
-  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const { name, files } = e.target;
-    if (files && files[0]) {
-      setSettings(prev => ({ ...prev, [name]: files[0] }));
-    } else {
-      setSettings(prev => ({...prev, [name]: null})); // Clear if no file selected
+  const handleSubmit = async (e: FormEvent) => {
+    e.preventDefault();
+    if (!settings) return;
+    try {
+      await apiClient('/api/admin/site-settings', {
+        method: 'PUT',
+        body: settings,
+      });
+      showToast('Site settings saved successfully!', 'success');
+    } catch (err: any) {
+      showToast(err.message, 'error');
     }
   };
-
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    console.log('Site settings saved (mock):', {
-        ...settings, 
-        platformLogo: settings.platformLogo?.name, // Log only name for brevity
-        favicon: settings.favicon?.name,
-        ogImage: settings.ogImage?.name,
-    });
-    alert('Mock: Site settings saved successfully!');
-  };
+  
+  if (isLoading || !settings) {
+    return (
+        <div className="flex items-center space-x-3">
+            <Cog6ToothIcon className="w-8 h-8 text-rose-400 animate-spin" />
+            <h1 className="text-3xl font-bold">Loading Site Settings...</h1>
+        </div>
+    );
+  }
 
   return (
     <div className="space-y-6 text-gray-100">
@@ -63,18 +72,22 @@ const SiteSettingsView: React.FC = () => {
         <fieldset className="border border-gray-600 p-4 rounded-md">
             <legend className="text-lg font-medium text-gray-200 px-1 mb-2">General & Branding</legend>
             <Input type="text" id="siteTitle" name="siteTitle" label="Site Title" value={settings.siteTitle} onChange={handleInputChange} className="[&_label]:text-gray-400 [&_input]:bg-gray-600 [&_input]:text-white" />
-            <Input type="file" id="platformLogo" name="platformLogo" label="Platform Logo (Max 2MB, .png, .svg)" onChange={handleFileChange} className="[&_label]:text-gray-400 [&_input]:bg-gray-600 [&_input]:text-white mt-3" />
-            {settings.platformLogo && <p className="text-xs text-green-400 mt-1">Selected: {settings.platformLogo.name}</p>}
-            <Input type="file" id="favicon" name="favicon" label="Favicon (Max 500KB, .ico, .png)" onChange={handleFileChange} className="[&_label]:text-gray-400 [&_input]:bg-gray-600 [&_input]:text-white mt-3" />
-            {settings.favicon && <p className="text-xs text-green-400 mt-1">Selected: {settings.favicon.name}</p>}
-            <Input type="file" id="ogImage" name="ogImage" label="Default OG Image (for social sharing)" onChange={handleFileChange} className="[&_label]:text-gray-400 [&_input]:bg-gray-600 [&_input]:text-white mt-3" />
-            {settings.ogImage && <p className="text-xs text-green-400 mt-1">Selected: {settings.ogImage.name}</p>}
-            <div>
-              <label htmlFor="appMetaDetails" className="block text-sm font-medium text-gray-400 mb-1 mt-3">App Meta Description (Default)</label>
-              <textarea id="appMetaDetails" name="appMetaDetails" value={settings.appMetaDetails} onChange={handleInputChange} rows={2} className="block w-full bg-gray-600 border-gray-500 rounded-md shadow-sm focus:border-rose-500 focus:ring-rose-500 sm:text-sm p-2 text-white" placeholder="Default meta description for search engines..."></textarea>
-            </div>
+            <Input type="text" id="platformLogoUrl" name="platformLogoUrl" label="Platform Logo URL" value={settings.platformLogoUrl || ''} onChange={handleInputChange} className="[&_label]:text-gray-400 [&_input]:bg-gray-600 [&_input]:text-white mt-3" placeholder="https://.../logo.png" />
+            <Input type="text" id="faviconUrl" name="faviconUrl" label="Favicon URL" value={settings.faviconUrl || ''} onChange={handleInputChange} className="[&_label]:text-gray-400 [&_input]:bg-gray-600 [&_input]:text-white mt-3" placeholder="https://.../favicon.ico" />
+            <Input type="text" id="ogImageUrl" name="ogImageUrl" label="Default OG Image URL (for social sharing)" value={settings.ogImageUrl || ''} onChange={handleInputChange} className="[&_label]:text-gray-400 [&_input]:bg-gray-600 [&_input]:text-white mt-3" placeholder="https://.../social-image.jpg"/>
             <Input type="email" id="contactEmail" name="contactEmail" label="Contact/Support Email" value={settings.contactEmail} onChange={handleInputChange} className="[&_label]:text-gray-400 [&_input]:bg-gray-600 [&_input]:text-white mt-3" />
-            <Input type="tel" id="contactMobile" name="contactMobile" label="Contact/Support Mobile" value={settings.contactMobile} onChange={handleInputChange} className="[&_label]:text-gray-400 [&_input]:bg-gray-600 [&_input]:text-white mt-3" />
+            <Input type="tel" id="contactMobile" name="contactMobile" label="Contact/Support Mobile" value={settings.contactMobile || ''} onChange={handleInputChange} className="[&_label]:text-gray-400 [&_input]:bg-gray-600 [&_input]:text-white mt-3" />
+        </fieldset>
+        
+        <fieldset className="border border-gray-600 p-4 rounded-md">
+            <legend className="text-lg font-medium text-gray-200 px-1 mb-2">Homepage & Default SEO</legend>
+            <Input id="homepageBannerText" name="homepageBannerText" label="Homepage Banner Text" value={settings.homepageBannerText} onChange={handleInputChange} className="[&_label]:text-gray-400 [&_input]:bg-gray-600 [&_input]:text-white" />
+            <Input id="homepageCtaText" name="homepageCtaText" label="Homepage CTA Button Text" value={settings.homepageCtaText} onChange={handleInputChange} className="[&_label]:text-gray-400 [&_input]:bg-gray-600 [&_input]:text-white mt-3" />
+            <Input id="defaultMetaTitle" name="defaultMetaTitle" label="Default Meta Title" value={settings.defaultMetaTitle} onChange={handleInputChange} className="[&_label]:text-gray-400 [&_input]:bg-gray-600 [&_input]:text-white mt-3" />
+            <div>
+              <label htmlFor="defaultMetaDescription" className="block text-sm font-medium text-gray-400 mb-1 mt-3">App Meta Description (Default)</label>
+              <textarea id="defaultMetaDescription" name="defaultMetaDescription" value={settings.defaultMetaDescription} onChange={handleInputChange} rows={2} className="block w-full bg-gray-600 border-gray-500 rounded-md shadow-sm focus:border-rose-500 focus:ring-rose-500 sm:text-sm p-2 text-white" placeholder="Default meta description for search engines..."></textarea>
+            </div>
         </fieldset>
 
         {/* Feature Toggles */}
@@ -86,7 +99,6 @@ const SiteSettingsView: React.FC = () => {
                     {name: 'privatePhotosEnabled', label: 'Private Photo Galleries Feature'},
                     {name: 'blogModuleEnabled', label: 'Blog Module'},
                     {name: 'successStoryModuleEnabled', label: 'Success Story Module'},
-                    // Add more modules as needed
                 ].map(feature => (
                     <div key={feature.name} className="flex items-center">
                         <input type="checkbox" id={feature.name} name={feature.name} checked={(settings as any)[feature.name]} onChange={handleInputChange} className="h-4 w-4 text-rose-500 bg-gray-600 border-gray-500 rounded focus:ring-rose-500" />
@@ -99,8 +111,8 @@ const SiteSettingsView: React.FC = () => {
         {/* Payment Gateway Configuration */}
         <fieldset className="border border-gray-600 p-4 rounded-md">
             <legend className="text-lg font-medium text-gray-200 px-1 mb-2">Payment Gateway Configuration (Mock)</legend>
-             <Input type="text" id="paymentGatewayKey" name="paymentGatewayKey" label="Gateway Public Key" value={settings.paymentGatewayKey} onChange={handleInputChange} className="[&_label]:text-gray-400 [&_input]:bg-gray-600 [&_input]:text-white" placeholder="pk_xxxxxxx"/>
-            <Input type="password" id="paymentGatewaySecret" name="paymentGatewaySecret" label="Gateway Secret Key" value={settings.paymentGatewaySecret} onChange={handleInputChange} className="[&_label]:text-gray-400 [&_input]:bg-gray-600 [&_input]:text-white mt-3" placeholder="rzp_xxxxxxx"/>
+             <Input type="text" id="paymentGatewayKey" name="paymentGatewayKey" label="Gateway Public Key" value={settings.paymentGatewayKey || ''} onChange={handleInputChange} className="[&_label]:text-gray-400 [&_input]:bg-gray-600 [&_input]:text-white" placeholder="pk_xxxxxxx"/>
+            <Input type="password" id="paymentGatewaySecret" name="paymentGatewaySecret" label="Gateway Secret Key" value={settings.paymentGatewaySecret || ''} onChange={handleInputChange} className="[&_label]:text-gray-400 [&_input]:bg-gray-600 [&_input]:text-white mt-3" placeholder="rzp_xxxxxxx"/>
             <p className="text-xs text-gray-500 mt-2">Enter API keys for your chosen payment gateway (e.g., Razorpay, Stripe). Store secrets securely.</p>
         </fieldset>
 
@@ -111,7 +123,7 @@ const SiteSettingsView: React.FC = () => {
                 <input type="checkbox" id="maintenanceMode" name="maintenanceMode" checked={settings.maintenanceMode} onChange={handleInputChange} className="h-4 w-4 text-rose-500 bg-gray-600 border-gray-500 rounded focus:ring-rose-500" />
                 <label htmlFor="maintenanceMode" className="ml-2 text-sm text-gray-300">Enable Maintenance Mode</label>
             </div>
-             <Input type="number" id="referralBonus" name="referralBonus" label="Referral Bonus Amount (₹)" value={settings.referralBonus} onChange={handleInputChange} className="[&_label]:text-gray-400 [&_input]:bg-gray-600 [&_input]:text-white mt-3" placeholder="e.g. 200" />
+             <Input type="number" id="referralBonus" name="referralBonus" label="Referral Bonus Amount (₹)" value={String(settings.referralBonus)} onChange={handleInputChange} className="[&_label]:text-gray-400 [&_input]:bg-gray-600 [&_input]:text-white mt-3" placeholder="e.g. 200" />
         </fieldset>
         
         <div className="pt-2 text-right">

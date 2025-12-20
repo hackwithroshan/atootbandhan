@@ -20,7 +20,25 @@ const OfferSchema: Schema<IOffer> = new Schema({
   startDate: { type: Date, required: true },
   endDate: { type: Date, required: true },
   status: { type: String, enum: ['Draft', 'Published'], default: 'Draft' },
-}, { timestamps: true });
+}, { 
+  timestamps: true,
+  toJSON: {
+    virtuals: true,
+    transform: (doc, ret) => {
+      ret.id = ret._id;
+      delete ret._id;
+      delete ret.__v;
+    }
+  },
+  toObject: {
+    virtuals: true,
+    transform: (doc, ret) => {
+      ret.id = ret._id;
+      delete ret._id;
+      delete ret.__v;
+    }
+  }
+});
 
 const Offer: Model<IOffer> = mongoose.model<IOffer>('Offer', OfferSchema);
 export default Offer;

@@ -4,19 +4,24 @@ import Input from '../../ui/Input';
 import { GiftIcon } from '../../icons/GiftIcon';
 import { ShareIcon } from '../../icons/ShareIcon';
 import { MailIcon } from '../../icons/MailIcon';
+import { useToast } from '../../../hooks/useToast';
 
-const ReferralProgramWidget: React.FC = () => {
+interface ReferralProgramWidgetProps {
+  userId: string;
+}
+
+const ReferralProgramWidget: React.FC<ReferralProgramWidgetProps> = ({ userId }) => {
   const [friendEmail, setFriendEmail] = useState('');
-  const mockReferralCode = 'ATUTXYZ123';
-  const mockBonusEarned = 0;
+  const referralCode = `ATUT${userId.substring(userId.length - 6).toUpperCase()}`;
+  const bonusEarned = 0; // Backend for this is not implemented yet.
+  const { showToast } = useToast();
 
   const handleSendInvite = () => {
     if (!friendEmail) {
-      alert('Please enter your friend\'s email.');
+      showToast('Please enter your friend\'s email.', 'error');
       return;
     }
-    console.log(`Mock: Sending referral invite to ${friendEmail} with code ${mockReferralCode}`);
-    alert(`Invite sent to ${friendEmail} (mock).`);
+    showToast(`Invite sent to ${friendEmail}! (Feature coming soon)`, 'success');
     setFriendEmail('');
   };
 
@@ -33,7 +38,7 @@ const ReferralProgramWidget: React.FC = () => {
       <div className="mb-4">
         <p className="text-sm text-gray-500 mb-1">Your Referral Code:</p>
         <div className="bg-rose-50 text-rose-700 font-mono text-lg p-3 rounded-md text-center tracking-wider">
-          {mockReferralCode}
+          {referralCode}
         </div>
       </div>
 
@@ -62,10 +67,10 @@ const ReferralProgramWidget: React.FC = () => {
 
       <div className="mt-5 pt-4 border-t border-gray-100">
         <p className="text-sm text-gray-600">
-          Bonus Earned: <span className="font-semibold text-green-600">₹{mockBonusEarned}</span> (mock)
+          Bonus Earned: <span className="font-semibold text-green-600">₹{bonusEarned}</span>
         </p>
         <p className="text-xs text-gray-400 mt-1">
-          View referral history and redeem options in your settings (coming soon).
+          Referral history and rewards are coming soon.
         </p>
       </div>
     </div>

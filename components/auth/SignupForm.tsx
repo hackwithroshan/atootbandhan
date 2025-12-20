@@ -268,7 +268,14 @@ const SignupForm: React.FC<SignupFormProps> = ({ onAuthSuccess }) => {
             <Select id="maritalStatus" name="maritalStatus" label="Marital Status" options={MARITAL_STATUS_OPTIONS} value={formData.maritalStatus} onChange={handleChange} error={errors.maritalStatus} required />
             <Select id="religion" name="religion" label="Religion" options={RELIGION_OPTIONS} value={formData.religion} onChange={handleChange} error={errors.religion} required />
         </div>
-        <Input id="caste" name="caste" label="Caste / Community" value={formData.caste} onChange={handleChange} error={errors.caste} icon={<IdentificationIcon className="w-5 h-5 text-gray-400" />} required />
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <Input id="caste" name="caste" label="Caste / Community" value={formData.caste} onChange={handleChange} error={errors.caste} icon={<IdentificationIcon className="w-5 h-5 text-gray-400" />} required />
+            <Input id="subCaste" name="subCaste" label="Sub-caste (Optional)" value={formData.subCaste || ''} onChange={handleChange} error={errors.subCaste} icon={<IdentificationIcon className="w-5 h-5 text-gray-400" />} />
+        </div>
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <Select id="manglikStatus" name="manglikStatus" label="Manglik Status (Optional)" options={MANGLIK_STATUS_OPTIONS} value={formData.manglikStatus || ''} onChange={handleChange} error={errors.manglikStatus} placeholder="Select Status" />
+            <Select id="profileCreatedBy" name="profileCreatedBy" label="Profile Created By (Optional)" options={PROFILE_CREATED_BY_OPTIONS} value={formData.profileCreatedBy || ''} onChange={handleChange} error={errors.profileCreatedBy} placeholder="Select Creator" />
+        </div>
         <Input id="city" name="city" label="City" value={formData.city} onChange={handleChange} error={errors.city} icon={<BuildingOfficeIcon className="w-5 h-5 text-gray-400" />} required />
         <Select id="motherTongue" name="motherTongue" label="Mother Tongue" options={MOTHER_TONGUE_OPTIONS} value={formData.motherTongue} onChange={handleChange} error={errors.motherTongue} icon={<LanguageIcon className="w-5 h-5 text-gray-400" />} required />
     </div>

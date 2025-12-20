@@ -8,35 +8,21 @@ import { PhotoIcon } from '../../icons/PhotoIcon';
 import { UserGroupIcon } from '../../icons/UserGroupIcon';
 import { BookOpenIcon } from '../../icons/BookOpenIcon';
 import { AcademicCapIcon } from '../../icons/AcademicCapIcon';
-import { EyeIcon } from '../../icons/EyeIcon';
-import { CheckBadgeIcon } from '../../icons/CheckBadgeIcon';
-import { ShieldCheckIcon } from '../../icons/ShieldCheckIcon';
-import { ArrowUpCircleIcon } from '../../icons/ArrowUpCircleIcon'; 
-import { TrashIcon } from '../../icons/TrashIcon';
-import { PlusCircleIcon } from '../../icons/PlusCircleIcon';
-import { LockClosedIcon as LockIcon } from '../../icons/LockClosedIcon'; 
-import { StarIcon } from '../../icons/StarIcon'; 
-import { HeartIcon } from '../../icons/HeartIcon'; 
-import { ShieldExclamationIcon } from '../../icons/ShieldExclamationIcon'; 
 import { XMarkIcon } from '../../icons/XMarkIcon';
-import { VideoCameraIcon } from '../../icons/VideoCameraIcon';
 import { MembershipBadge } from '../../common/MembershipBadge';
-import { VoiceVerifiedIcon } from '../../icons/VoiceVerifiedIcon';
-import { VideoVerifiedIcon } from '../../icons/VideoVerifiedIcon';
-import { AiTrustedIcon } from '../../icons/AiTrustedIcon';
-import { API_URL } from '../../../utils/config';
 
 import { 
   Gender, Religion, MaritalStatus, MotherTongue, HeightUnit, UserPhoto,
-  ProfileCreatedBy, DietaryHabits, YesNoOccasionally, FamilyType, FamilyValues, ManglikStatus, WeightUnit, EducationLevel, OccupationCategory, LoggedInUserSessionData, UserProfileData, MembershipTier, UserFeatures, PartnerPreferencesData
+  ProfileCreatedBy, DietaryHabits, YesNoOccasionally, FamilyType, FamilyValues, ManglikStatus, WeightUnit, EducationLevel, OccupationCategory, LoggedInUserSessionData, UserProfileData, MembershipTier, UserFeatures
 } from '../../../types';
 import { 
   GENDER_OPTIONS, RELIGION_OPTIONS, MARITAL_STATUS_OPTIONS, MOTHER_TONGUE_OPTIONS, HEIGHT_UNIT_OPTIONS,
   PROFILE_CREATED_BY_OPTIONS, DIETARY_HABITS_OPTIONS, YES_NO_OCCASIONALLY_OPTIONS, FAMILY_TYPE_OPTIONS, FAMILY_VALUES_OPTIONS, MANGLIK_STATUS_OPTIONS, WEIGHT_UNIT_OPTIONS, EDUCATION_OPTIONS, OCCUPATION_OPTIONS
 } from '../../../constants';
 import UpgradePrompt from '../../common/UpgradePrompt'; 
+import apiClient from '../../../utils/apiClient';
+import { useToast } from '../../../hooks/useToast';
 
-// Type definitions remain the same
 type EditableSectionData = UserProfileData['basicInfo'] | UserProfileData['familyDetails'] | UserProfileData['lifestyle'] | UserProfileData['educationAndCareer'] | UserProfileData['partnerPreferences'];
 type ProfileSectionName = 'My Photos' | 'My Profile Video' | 'Basic Information' | 'Family Details' | 'Lifestyle & Hobbies' | 'Education & Career' | 'Partner Preferences' | 'About Me' | 'Profile Photo';
 const ProfileSection: React.FC<{ title: ProfileSectionName; icon: React.ReactNode; children: React.ReactNode; onEdit?: (section: ProfileSectionName) => void; isLocked?: boolean; featureName?: string; requiredTier?: MembershipTier; onUpgradeClick?: () => void; }> = ({ title, icon, children, onEdit, isLocked, featureName, requiredTier, onUpgradeClick }) => (
@@ -66,6 +52,7 @@ export const MyProfileView: React.FC<MyProfileViewProps> = ({ loggedInUser, user
   const [user, setUser] = useState<UserProfileData | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const { showToast } = useToast();
 
   const [editingSection, setEditingSection] = useState<ProfileSectionName | null>(null);
   const [editableSectionData, setEditableSectionData] = useState<any>({});
@@ -83,27 +70,21 @@ export const MyProfileView: React.FC<MyProfileViewProps> = ({ loggedInUser, user
 
   const fetchUserProfile = useCallback(async () => {
     setIsLoading(true);
-    const token = localStorage.getItem('token');
     try {
-      const res = await fetch(`${API_URL}/api/users/profile`, {
-        headers: { 'x-auth-token': token || '' },
-      });
-      if (!res.ok) throw new Error('Failed to fetch profile data.');
-      const data = await res.json();
+      const data = await apiClient('/api/users/profile');
       
       const formattedData: UserProfileData = {
           fullName: data.fullName,
           age: calculateAge(data.dateOfBirth),
-          location: `${data.city || ''}, ${data.state || ''}`,
+          location: `${data.city || 'N/A'}, ${data.state || 'N/A'}`,
           profilePhotoUrl: data.profilePhotoUrl || '',
           photos: data.photos || [],
           membershipTier: data.membershipTier,
           profileBio: data.profileBio || '',
           basicInfo: {
-              gender: data.gender, dateOfBirth: data.dateOfBirth, heightValue: data.heightValue, heightUnit: data.heightUnit,
+              gender: data.gender, dateOfBirth: data.dateOfBirth ? data.dateOfBirth.split('T')[0] : '', heightValue: data.heightValue, heightUnit: data.heightUnit,
               weightValue: data.weightValue, weightUnit: data.weightUnit, religion: data.religion, caste: data.caste, subCaste: data.subCaste,
               motherTongue: data.motherTongue, maritalStatus: data.maritalStatus, manglikStatus: data.manglikStatus, profileCreatedBy: data.profileCreatedBy,
-              // Storing these temporarily in basicInfo for easier access in view, though not in strict interface
               city: data.city, state: data.state, country: data.country
           } as any, 
           familyDetails: {
@@ -121,10 +102,11 @@ export const MyProfileView: React.FC<MyProfileViewProps> = ({ loggedInUser, user
       setUser(formattedData);
     } catch (err: any) {
       setError(err.message);
+      showToast(err.message, 'error');
     } finally {
       setIsLoading(false);
     }
-  }, []);
+  }, [showToast]);
 
   useEffect(() => {
     fetchUserProfile();
@@ -140,29 +122,22 @@ export const MyProfileView: React.FC<MyProfileViewProps> = ({ loggedInUser, user
         cloudinaryFormData.append('file', file);
         cloudinaryFormData.append('upload_preset', 'attut_bandhan');
 
-        const cloudinaryRes = await fetch('https://api.cloudinary.com/v1_1/dvrqft9ov/image/upload', {
+        const cloudinaryData = await apiClient('https://api.cloudinary.com/v1_1/dvrqft9ov/image/upload', {
             method: 'POST',
-            body: cloudinaryFormData,
+            body: cloudinaryFormData
         });
-
-        if (!cloudinaryRes.ok) throw new Error('Image upload failed.');
         
-        const cloudinaryData = await cloudinaryRes.json();
         const newUrl = cloudinaryData.secure_url;
 
-        const token = localStorage.getItem('token');
-        const backendRes = await fetch(`${API_URL}/api/users/profile`, {
+        await apiClient('/api/users/profile', {
             method: 'PUT',
-            headers: { 'Content-Type': 'application/json', 'x-auth-token': token || '' },
-            body: JSON.stringify({ profilePhotoUrl: newUrl }),
+            body: { profilePhotoUrl: newUrl },
         });
 
-        if (!backendRes.ok) throw new Error('Failed to save new profile photo.');
-
         setUser(prev => prev ? { ...prev, profilePhotoUrl: newUrl } : null);
-        alert('Profile photo updated successfully!');
+        showToast('Profile photo updated successfully!', 'success');
     } catch (err: any) {
-        alert(`Error: ${err.message}`);
+        showToast(err.message, 'error');
     } finally {
         setIsUploadingPhoto(false);
     }
@@ -171,28 +146,20 @@ export const MyProfileView: React.FC<MyProfileViewProps> = ({ loggedInUser, user
   const handleSaveChanges = async (e: FormEvent) => {
     e.preventDefault();
     if (!editingSection || !user) return;
-    const token = localStorage.getItem('token');
     
     let payload = { ...editableSectionData };
     
-    // Backend expects nested PartnerPreferences object
-    if (editingSection === 'Partner Preferences') {
-        payload = { partnerPreferences: editableSectionData };
-    }
-
     try {
-        const res = await fetch(`${API_URL}/api/users/profile`, {
+        await apiClient('/api/users/profile', {
             method: 'PUT',
-            headers: { 'Content-Type': 'application/json', 'x-auth-token': token || '' },
-            body: JSON.stringify(payload),
+            body: payload,
         });
-        if (!res.ok) throw new Error('Failed to save changes.');
 
-        await fetchUserProfile(); // Re-fetch profile to get latest data
-        alert(`${editingSection} updated successfully!`);
+        await fetchUserProfile();
+        showToast(`${editingSection} updated successfully!`, 'success');
         handleCloseModal();
     } catch (err: any) {
-        alert(`Error: ${err.message}`);
+        showToast(err.message, 'error');
     }
   };
 
@@ -204,10 +171,9 @@ export const MyProfileView: React.FC<MyProfileViewProps> = ({ loggedInUser, user
         setEditableSectionData({ 
             ...user.basicInfo, 
             fullName: user.fullName,
-            // Ensure flat structure for city/state/country if they were fetched
-            city: (user.basicInfo as any).city || '', 
-            state: (user.basicInfo as any).state || '', 
-            country: (user.basicInfo as any).country || '' 
+            city: (user.basicInfo as any).city, 
+            state: (user.basicInfo as any).state, 
+            country: (user.basicInfo as any).country 
         }); 
         break;
       case 'Family Details': setEditableSectionData({ ...user.familyDetails }); break;
@@ -218,7 +184,6 @@ export const MyProfileView: React.FC<MyProfileViewProps> = ({ loggedInUser, user
             education: user.educationAndCareer.highestEducation // Map back to backend field name
         }); 
         break;
-      case 'Partner Preferences': setEditableSectionData({ ...user.partnerPreferences }); break;
       case 'About Me': setEditableSectionData({ profileBio: user.profileBio }); break; 
       default: setEditableSectionData({});
     }
@@ -228,16 +193,8 @@ export const MyProfileView: React.FC<MyProfileViewProps> = ({ loggedInUser, user
   
   const handleSectionDataChange = (e: ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
     const { name, value, type } = e.target;
-    
-    if (type === 'checkbox') {
-        const checked = (e.target as HTMLInputElement).checked;
-        setEditableSectionData((prev: any) => ({ ...prev, [name]: checked }));
-    } else if (type === 'select-multiple') {
-        const selectedOptions = Array.from((e.target as HTMLSelectElement).selectedOptions).map(option => option.value);
-        setEditableSectionData((prev: any) => ({ ...prev, [name]: selectedOptions }));
-    } else {
-        setEditableSectionData((prev: any) => ({ ...prev, [name]: value }));
-    }
+    const checked = (e.target as HTMLInputElement).checked;
+    setEditableSectionData((prev: any) => ({ ...prev, [name]: type === 'checkbox' ? checked : value }));
   };
 
   const renderEditForm = () => {
@@ -350,7 +307,7 @@ export const MyProfileView: React.FC<MyProfileViewProps> = ({ loggedInUser, user
       <h2 className="text-2xl font-semibold text-gray-800">My Profile</h2>
       {/* Profile Header */}
       <div className="bg-white p-6 rounded-lg shadow-md flex flex-col sm:flex-row items-center space-y-4 sm:space-y-0 sm:space-x-6">
-         <img src={user.profilePhotoUrl} alt={user.fullName} className="w-24 h-24 rounded-full object-cover border-2 border-rose-500" />
+         <img src={user.profilePhotoUrl || 'https://via.placeholder.com/96'} alt={user.fullName} className="w-24 h-24 rounded-full object-cover border-2 border-rose-500" />
          <div className="text-center sm:text-left">
             <h3 className="text-2xl font-bold text-rose-600 flex items-center justify-center sm:justify-start">
                 {user.fullName} <MembershipBadge tier={user.membershipTier} className="ml-2"/>
@@ -363,7 +320,7 @@ export const MyProfileView: React.FC<MyProfileViewProps> = ({ loggedInUser, user
       {/* Profile Photo Uploader Section */}
       <ProfileSection title="Profile Photo" icon={<PhotoIcon className="w-5 h-5 mr-2 text-rose-500" />}>
         <div className="flex items-center space-x-4">
-            <img src={user.profilePhotoUrl} alt="Current profile" className="w-20 h-20 rounded-full object-cover" />
+            <img src={user.profilePhotoUrl || 'https://via.placeholder.com/80'} alt="Current profile" className="w-20 h-20 rounded-full object-cover" />
             <div className="flex-grow">
                 <Input
                     type="file"

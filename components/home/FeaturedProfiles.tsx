@@ -53,7 +53,7 @@ const FeaturedProfiles: React.FC<FeaturedProfilesProps> = ({ onViewProfileClick 
       try {
         const data = await apiClient('/api/users/featured');
         const formattedProfiles = data.map((user: any) => ({
-          id: user._id,
+          id: user.id,
           name: user.fullName,
           age: user.dateOfBirth ? new Date().getFullYear() - new Date(user.dateOfBirth).getFullYear() : 30,
           city: user.city || 'Unknown',

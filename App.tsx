@@ -18,7 +18,6 @@ const App: React.FC = () => {
     const token = localStorage.getItem('token');
     if (token) {
       try {
-        // FIX: Changed endpoint from /api/auth/me to the correct /api/users/profile
         const userData = await apiClient('/api/users/profile');
 
         if (userData.role && userData.role !== 'user' && Object.values(AdminRole).includes(userData.role as AdminRole)) {
@@ -27,7 +26,7 @@ const App: React.FC = () => {
             setView('adminDashboard');
         } else {
           setLoggedInUser({
-            id: userData._id,
+            id: userData.id,
             email: userData.email,
             gender: userData.gender,
             name: userData.fullName,

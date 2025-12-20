@@ -3,7 +3,7 @@ import Button from '../../ui/Button';
 import Input from '../../ui/Input';
 import Select from '../../ui/Select';
 import { UsersIcon } from '../../icons/UsersIcon';
-import { PartnerPreferencesData, MaritalStatus, Religion, EducationLevel, OccupationCategory, YesNoOccasionally } from '../../../types';
+import { PartnerPreferencesData } from '../../../types';
 import { MARITAL_STATUS_OPTIONS, RELIGION_OPTIONS, EDUCATION_OPTIONS, OCCUPATION_OPTIONS, YES_NO_OCCASIONALLY_OPTIONS } from '../../../constants';
 import apiClient from '../../../utils/apiClient';
 import { useToast } from '../../../hooks/useToast';

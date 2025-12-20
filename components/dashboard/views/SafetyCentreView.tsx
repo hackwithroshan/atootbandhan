@@ -7,25 +7,41 @@ import { ExclamationTriangleIcon } from '../../icons/ExclamationTriangleIcon';
 import { LockClosedIcon } from '../../icons/LockClosedIcon';
 import { XMarkIcon } from '../../icons/XMarkIcon';
 import { REPORT_REASON_OPTIONS } from '../../../constants';
+import { SupportTicketCategory } from '../../../types';
+import apiClient from '../../../utils/apiClient';
+import { useToast } from '../../../hooks/useToast';
 
 const SafetyCentreView: React.FC = () => {
   const [showReportModal, setShowReportModal] = useState(false);
   const [reportUserId, setReportUserId] = useState('');
   const [reportReason, setReportReason] = useState('');
   const [reportDescription, setReportDescription] = useState('');
+  const { showToast } = useToast();
   
-  const mockBlockedUsers = ['USR987', 'USR654']; // Example IDs
+  const mockBlockedUsers: string[] = []; // Removed mock data
 
-  const handleReportSubmit = (e: FormEvent) => {
+  const handleReportSubmit = async (e: FormEvent) => {
     e.preventDefault();
     if (!reportUserId || !reportReason) {
-        alert("Please enter the User ID to report and select a reason.");
+        showToast("Please enter the User ID to report and select a reason.", 'error');
         return;
     }
-    console.log('Reporting user (mock):', { userId: reportUserId, reason: reportReason, description: reportDescription });
-    alert(`User ${reportUserId} reported successfully. Reason: ${reportReason}. (Mock)`);
-    setShowReportModal(false);
-    setReportUserId(''); setReportReason(''); setReportDescription('');
+    
+    try {
+        await apiClient('/api/tickets', {
+            method: 'POST',
+            body: {
+                subject: `Report against User ID: ${reportUserId}`,
+                category: SupportTicketCategory.REPORT_ABUSE_SPAM,
+                description: `Report Reason: ${reportReason}\n\nDetails: ${reportDescription || 'No additional details provided.'}`
+            }
+        });
+        showToast(`User ${reportUserId} reported successfully. Our team will review it shortly.`, 'success');
+        setShowReportModal(false);
+        setReportUserId(''); setReportReason(''); setReportDescription('');
+    } catch (err: any) {
+        showToast(err.message, 'error');
+    }
   };
 
   const safetyTips = [
@@ -71,7 +87,7 @@ const SafetyCentreView: React.FC = () => {
             </Button>
             <Button 
                 variant="secondary" 
-                onClick={() => alert("Navigate to Blocked Users management (mock).")}
+                onClick={() => showToast('Feature coming soon!', 'info')}
                 className="!border-gray-400"
             >
                 <LockClosedIcon className="w-5 h-5 mr-2"/> Manage Blocked Users
@@ -80,21 +96,21 @@ const SafetyCentreView: React.FC = () => {
         <div className="mt-4">
             <h4 className="text-md font-medium text-gray-700">Quick Links:</h4>
             <ul className="list-disc list-inside text-sm text-rose-600 space-y-1 mt-1">
-                <li><button className="hover:underline" onClick={() => alert("Displaying info on how we verify profiles (mock).")}>How We Verify Profiles</button></li>
-                <li><button className="hover:underline" onClick={() => alert("Displaying info on what to do if someone misbehaves (mock).")}>Reporting Misbehavior</button></li>
-                <li><button className="hover:underline" onClick={() => alert("Displaying Community Standards document (mock).")}>Community Standards</button></li>
+                <li><button className="hover:underline" onClick={() => showToast("Showing how we verify profiles (info popup).", 'info')}>How We Verify Profiles</button></li>
+                <li><button className="hover:underline" onClick={() => showToast("Showing guidance on reporting misbehavior (info popup).", 'info')}>Reporting Misbehavior</button></li>
+                <li><button className="hover:underline" onClick={() => showToast("Displaying Community Standards document (info popup).", 'info')}>Community Standards</button></li>
             </ul>
         </div>
       </div>
 
       {/* Mock Blocked Users List (could be part of Account Settings too) */}
        <div className="bg-white p-6 rounded-lg shadow-md">
-        <h3 className="text-lg font-semibold text-gray-700 mb-3 border-b pb-2">Your Blocked Users (Mock)</h3>
+        <h3 className="text-lg font-semibold text-gray-700 mb-3 border-b pb-2">Your Blocked Users</h3>
         {mockBlockedUsers.length > 0 ? (
             <ul className="space-y-1 text-sm text-gray-600">
-                {mockBlockedUsers.map(id => <li key={id} className="p-1.5 bg-gray-50 rounded">{id} - <button className="text-xs text-red-500 hover:underline" onClick={() => alert(`Unblocking ${id} (mock)`)}>Unblock</button></li>)}
+                {mockBlockedUsers.map(id => <li key={id} className="p-1.5 bg-gray-50 rounded">{id} - <button className="text-xs text-red-500 hover:underline" onClick={() => showToast('This feature is coming soon!', 'info')}>Unblock</button></li>)}
             </ul>
-        ) : <p className="text-sm text-gray-500">You haven't blocked any users.</p>}
+        ) : <p className="text-sm text-gray-500">You haven't blocked any users. The ability to manage blocked users is coming soon.</p>}
       </div>
 
 

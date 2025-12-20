@@ -1,12 +1,12 @@
-
 import React from 'react';
 import Button from '../../ui/Button';
 
 interface ProfileCompletionWidgetProps {
   percentage: number;
+  onCompleteNowClick: () => void;
 }
 
-const ProfileCompletionWidget: React.FC<ProfileCompletionWidgetProps> = ({ percentage }) => {
+const ProfileCompletionWidget: React.FC<ProfileCompletionWidgetProps> = ({ percentage, onCompleteNowClick }) => {
   return (
     <div className="bg-white p-6 rounded-lg shadow-lg">
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between">
@@ -19,7 +19,7 @@ const ProfileCompletionWidget: React.FC<ProfileCompletionWidgetProps> = ({ perce
         <Button 
           variant="primary" 
           className="mt-4 sm:mt-0 sm:ml-4 !bg-rose-500 hover:!bg-rose-600"
-          onClick={() => console.log("Complete profile clicked")} // This should navigate to MyProfile
+          onClick={onCompleteNowClick}
         >
           Complete Now
         </Button>

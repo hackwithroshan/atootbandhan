@@ -1,5 +1,5 @@
 import mongoose, { Schema, Document, Model } from 'mongoose';
-import { ChatMessageStatus } from '../../types.js';
+import { ChatMessageStatus } from '../../../types.js';
 
 export interface IMessage extends Document {
   conversation: mongoose.Types.ObjectId;
@@ -13,7 +13,25 @@ const MessageSchema: Schema<IMessage> = new Schema({
   sender: { type: Schema.Types.ObjectId, ref: 'User', required: true },
   text: { type: String, required: true },
   status: { type: String, enum: ['sent', 'delivered', 'seen'], default: 'sent' },
-}, { timestamps: true });
+}, { 
+  timestamps: true,
+  toJSON: {
+    virtuals: true,
+    transform: (doc, ret) => {
+      ret.id = ret._id;
+      delete ret._id;
+      delete ret.__v;
+    }
+  },
+  toObject: {
+    virtuals: true,
+    transform: (doc, ret) => {
+      ret.id = ret._id;
+      delete ret._id;
+      delete ret.__v;
+    }
+  }
+});
 
 const Message: Model<IMessage> = mongoose.model<IMessage>('Message', MessageSchema);
 export default Message;

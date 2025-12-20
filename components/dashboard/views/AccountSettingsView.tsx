@@ -1,4 +1,3 @@
-
 import React, { useState, FormEvent } from 'react';
 import Button from '../../ui/Button';
 import Input from '../../ui/Input';
@@ -10,11 +9,13 @@ import { BellIcon } from '../../icons/BellIcon';
 import { TrashIcon } from '../../icons/TrashIcon';
 import { PhotoVisibility, PrivacySettings, NotificationPreferences, DeleteAccountReason } from '../../../types';
 import { PHOTO_VISIBILITY_OPTIONS, NOTIFICATION_TYPE_LABELS, DELETE_ACCOUNT_REASON_OPTIONS } from '../../../constants';
+import { useToast } from '../../../hooks/useToast';
 
 type SettingsTabKey = 'login' | 'privacy' | 'notifications' | 'deleteAccount';
 
 const AccountSettingsView: React.FC = () => {
   const [activeTab, setActiveTab] = useState<SettingsTabKey>('login');
+  const { showToast } = useToast();
 
   // Login & Password State
   const [currentPassword, setCurrentPassword] = useState('');
@@ -24,7 +25,7 @@ const AccountSettingsView: React.FC = () => {
   // Privacy Settings State
   const [privacySettings, setPrivacySettings] = useState<PrivacySettings>({
     photoVisibility: PhotoVisibility.MATCHES_ONLY,
-    blockedUserIds: ['USR008', 'USR015'], // Mock blocked users
+    blockedUserIds: [], // Removed mock data
   });
 
   // Notification Preferences State
@@ -50,35 +51,19 @@ const AccountSettingsView: React.FC = () => {
 
   const handlePasswordChange = (e: FormEvent) => {
     e.preventDefault();
-    if (newPassword !== confirmNewPassword) {
-      alert("New passwords do not match.");
-      return;
-    }
-    if (newPassword.length < 6) {
-      alert("New password must be at least 6 characters long.");
-      return;
-    }
-    console.log('Changing password (mock):', { currentPassword, newPassword });
-    alert('Password changed successfully! (Mock)');
-    setCurrentPassword(''); setNewPassword(''); setConfirmNewPassword('');
+    showToast('This feature is coming soon!', 'info');
   };
 
   const handlePrivacyChange = (field: keyof PrivacySettings, value: any) => {
     setPrivacySettings(prev => ({ ...prev, [field]: value }));
-    // console.log(`Privacy setting ${field} changed to ${value}`);
   };
   
   const handleSavePrivacy = () => {
-    console.log('Saving privacy settings (mock):', privacySettings);
-    alert('Privacy settings saved! (Mock)');
+    showToast('This feature is coming soon!', 'info');
   };
 
   const handleUnblockUser = (userId: string) => {
-    setPrivacySettings(prev => ({
-        ...prev,
-        blockedUserIds: prev.blockedUserIds?.filter(id => id !== userId)
-    }));
-    alert(`User ${userId} unblocked. (Mock)`);
+    showToast('This feature is coming soon!', 'info');
   };
 
   const handleNotificationPrefChange = (key: keyof NotificationPreferences) => {
@@ -86,21 +71,12 @@ const AccountSettingsView: React.FC = () => {
   };
 
   const handleSaveNotificationPrefs = () => {
-    console.log('Saving notification preferences (mock):', notificationPrefs);
-    alert('Notification preferences saved! (Mock)');
+    showToast('This feature is coming soon!', 'info');
   };
   
   const handleDeleteAccount = (e: FormEvent) => {
     e.preventDefault();
-    if (!deleteReason) {
-        alert("Please select a reason for deleting your account.");
-        return;
-    }
-    if (window.confirm('Are you absolutely sure you want to delete your account? This action cannot be undone.')) {
-      console.log('Deleting account (mock):', { reason: deleteReason, feedback: deleteFeedback });
-      alert('Account deletion process initiated. You will be logged out. (Mock)');
-      // Here, you would call an onLogout prop or similar.
-    }
+    showToast('This feature is coming soon!', 'info');
   };
   
 
@@ -117,7 +93,7 @@ const AccountSettingsView: React.FC = () => {
             <div className="mt-6 border-t pt-4">
                 <h3 className="text-lg font-medium text-gray-700">Account Security</h3>
                 <p className="text-sm text-gray-500 mb-2">Last login: 2 days ago from Mumbai, India (Mock)</p>
-                <Button variant="secondary" onClick={() => alert('Logged out from all other devices (mock).')}>Logout from All Other Devices</Button>
+                <Button variant="secondary" onClick={() => showToast('This feature is coming soon!', 'info')}>Logout from All Other Devices</Button>
             </div>
           </form>
         );

@@ -4,7 +4,7 @@ import { Cog6ToothIcon } from '../../icons/Cog6ToothIcon';
 import { ArrowLeftOnRectangleIcon } from '../../icons/ArrowLeftOnRectangleIcon';
 import { Bars3Icon } from '../../icons/Bars3Icon';
 import { UserIcon } from '../../icons/UserIcon'; 
-import { Notification, NotificationType } from '../../../types'; 
+import { Notification, NotificationType, DashboardViewKey } from '../../../types'; 
 import { CheckIcon } from '../../icons/CheckIcon';
 import { HeartIcon } from '../../icons/HeartIcon'; 
 import { ChatBubbleBottomCenterTextIcon } from '../../icons/ChatBubbleBottomCenterTextIcon'; 
@@ -19,6 +19,7 @@ interface DashboardHeaderProps {
   toggleSidebar: () => void;
   toggleProfileDrawer: () => void; 
   userPhotoUrl?: string | null; 
+  setActiveView: (viewKey: DashboardViewKey) => void;
 }
 
 const formatTimeAgo = (dateStr: string | Date): string => {
@@ -37,7 +38,7 @@ const formatTimeAgo = (dateStr: string | Date): string => {
 };
 
 
-const DashboardHeader: React.FC<DashboardHeaderProps> = ({ onLogout, toggleSidebar, toggleProfileDrawer, userPhotoUrl }) => {
+const DashboardHeader: React.FC<DashboardHeaderProps> = ({ onLogout, toggleSidebar, toggleProfileDrawer, userPhotoUrl, setActiveView }) => {
   const [isProfileDropdownOpen, setIsProfileDropdownOpen] = useState(false);
   const [isNotificationDropdownOpen, setIsNotificationDropdownOpen] = useState(false);
   const [notifications, setNotifications] = useState<Notification[]>([]);
@@ -112,8 +113,11 @@ const DashboardHeader: React.FC<DashboardHeaderProps> = ({ onLogout, toggleSideb
         markAsRead(notification.id);
     }
     if (notification.redirectTo) {
-      alert(`Mock navigation to: ${notification.redirectTo}`);
+      // The redirectTo string should be a valid DashboardViewKey
+      setActiveView(notification.redirectTo as DashboardViewKey);
     }
+    // Close the dropdown after clicking
+    setIsNotificationDropdownOpen(false);
   };
 
   const getNotificationIcon = (type: NotificationType) => {
@@ -143,7 +147,7 @@ const DashboardHeader: React.FC<DashboardHeaderProps> = ({ onLogout, toggleSideb
             >
               <Bars3Icon className="h-6 w-6" />
             </button>
-            <a href="#/dashboard/home" onClick={(e) => {e.preventDefault(); console.log("Navigate to dashboard home (mock)")}} className="text-2xl font-bold text-rose-600">
+            <a href="#" onClick={(e) => {e.preventDefault(); setActiveView('DashboardHome')}} className="text-2xl font-bold text-rose-600">
               Atut Bandhan
             </a>
           </div>
@@ -198,87 +202,55 @@ const DashboardHeader: React.FC<DashboardHeaderProps> = ({ onLogout, toggleSideb
                             <p className={`text-xs ${!notif.isRead ? 'text-gray-600' : 'text-gray-500'}`}>{notif.message}</p>
                             <p className={`text-xs mt-0.5 ${!notif.isRead ? 'text-rose-500' : 'text-gray-400'}`}>{formatTimeAgo(notif.createdAt)}</p>
                           </div>
-                          {!notif.isRead && <div className="w-2 h-2 bg-rose-500 rounded-full self-center flex-shrink-0 ml-2"></div>}
+                          {!notif.isRead && <div className="w-2 h-2 bg-rose-500 rounded-full self-center"></div>}
                         </div>
                       </li>
                     )) : (
-                      <li className="p-4 text-center text-sm text-gray-500">No new notifications.</li>
+                        <li className="p-4 text-center text-sm text-gray-500">No new notifications.</li>
                     )}
                   </ul>
-                   {notifications.length > 0 && (
-                    <div className="px-4 py-2 border-t text-center">
-                        <a 
-                            href="#/dashboard/all-notifications" 
-                            className="text-xs text-rose-600 hover:underline" 
-                            onClick={(e) => {
-                                e.preventDefault(); 
-                                alert("Navigate to All Notifications page (mock)");
-                                setIsNotificationDropdownOpen(false);
-                            }}
-                        >
-                            View all notifications
-                        </a>
-                    </div>
-                   )}
+                  <div className="border-t">
+                      <button onClick={() => { setActiveView('ActivityLog'); setIsNotificationDropdownOpen(false); }} className="block w-full text-center px-4 py-2 text-xs text-rose-600 hover:bg-gray-50">View all activity</button>
+                  </div>
                 </div>
               )}
             </div>
-
+            
             <div className="relative" ref={profileDropdownRef}>
               <button
                 onClick={handleToggleProfileDropdown}
-                className="flex text-sm border-2 border-transparent rounded-full focus:outline-none focus:border-gray-300 transition p-0.5 hover:bg-gray-100"
-                aria-label="User menu"
+                className="flex items-center text-sm border-2 border-transparent rounded-full focus:outline-none focus:border-rose-300 transition"
                 aria-haspopup="true"
                 aria-expanded={isProfileDropdownOpen}
               >
-                <img 
-                  src={userPhotoUrl || 'https://via.placeholder.com/40/CCCCCC/FFFFFF?Text=User'} 
-                  alt="User profile" 
-                  className="h-8 w-8 rounded-full object-cover" 
-                /> 
+                <img
+                  className="h-8 w-8 rounded-full object-cover bg-gray-200"
+                  src={userPhotoUrl || undefined}
+                  alt="User profile"
+                />
               </button>
               {isProfileDropdownOpen && (
                 <div 
-                    className="origin-top-right absolute right-0 mt-2 w-48 rounded-md shadow-lg py-1 bg-white ring-1 ring-black ring-opacity-5 focus:outline-none"
-                    role="menu" aria-orientation="vertical" aria-labelledby="user-menu-button"
+                  className="origin-top-right absolute right-0 mt-2 w-48 rounded-md shadow-lg py-1 bg-white ring-1 ring-black ring-opacity-5 focus:outline-none"
+                  role="menu" aria-orientation="vertical" aria-labelledby="user-menu-button"
                 >
-                  <a
-                    href="#/dashboard/my-profile" onClick={(e)=>{e.preventDefault(); console.log("Simulating navigation to: #/dashboard/my-profile"); alert("Navigate to My Profile (mock)"); handleToggleProfileDropdown();}}
-                    className="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
-                    role="menuitem"
-                  >
-                    <UserIcon className="w-5 h-5 mr-2 text-gray-500" /> 
-                    My Profile
-                  </a>
-                  <a
-                    href="#/dashboard/settings" onClick={(e)=>{e.preventDefault(); console.log("Simulating navigation to: #/dashboard/settings"); alert("Navigate to Account Settings (mock)"); handleToggleProfileDropdown();}}
-                    className="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
-                    role="menuitem"
-                  >
-                    <Cog6ToothIcon className="w-5 h-5 mr-2 text-gray-500" />
-                    Account Settings
-                  </a>
+                  <button onClick={toggleProfileDrawer} className="w-full text-left flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-100" role="menuitem">
+                    <UserIcon className="w-5 h-5 mr-2 text-gray-500"/> My Account
+                  </button>
+                  <button onClick={() => {setActiveView('AccountSettings'); setIsProfileDropdownOpen(false);}} className="w-full text-left flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-100" role="menuitem">
+                    <Cog6ToothIcon className="w-5 h-5 mr-2 text-gray-500"/> Settings
+                  </button>
                   <button
-                    onClick={() => {onLogout(); handleToggleProfileDropdown();}}
+                    onClick={onLogout}
                     className="w-full text-left flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
                     role="menuitem"
                   >
-                    <ArrowLeftOnRectangleIcon className="w-5 h-5 mr-2 text-gray-500" />
+                    <ArrowLeftOnRectangleIcon className="w-5 h-5 mr-2 text-gray-500"/>
                     Logout
                   </button>
                 </div>
               )}
             </div>
-
-             <button
-              onClick={toggleProfileDrawer}
-              className="p-1.5 text-gray-500 hover:text-gray-700 hover:bg-gray-100 rounded-full focus:outline-none focus:ring-2 focus:ring-rose-500"
-              aria-label="Open profile and quick links"
-            >
-              <EllipsisVerticalIcon className="h-6 w-6" />
-            </button>
-
           </div>
         </div>
       </div>

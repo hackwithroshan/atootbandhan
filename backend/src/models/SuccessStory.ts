@@ -16,7 +16,25 @@ const SuccessStorySchema: Schema<ISuccessStory> = new Schema({
   weddingDate: { type: String },
   submittedBy: { type: Schema.Types.ObjectId, ref: 'User' },
   status: { type: String, enum: ['Pending', 'Approved', 'Rejected'], default: 'Pending' },
-}, { timestamps: true });
+}, { 
+  timestamps: true,
+  toJSON: {
+    virtuals: true,
+    transform: (doc, ret) => {
+      ret.id = ret._id;
+      delete ret._id;
+      delete ret.__v;
+    }
+  },
+  toObject: {
+    virtuals: true,
+    transform: (doc, ret) => {
+      ret.id = ret._id;
+      delete ret._id;
+      delete ret.__v;
+    }
+  }
+});
 
 const SuccessStory: Model<ISuccessStory> = mongoose.model<ISuccessStory>('SuccessStory', SuccessStorySchema);
 export default SuccessStory;

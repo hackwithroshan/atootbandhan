@@ -7,7 +7,6 @@ import { SparklesIcon } from '../../icons/SparklesIcon';
 import { Gender, MembershipTier, UserFeatures, MatchProfile } from '../../../types'; 
 import { CarouselChevronLeftIcon } from '../../icons/CarouselChevronLeftIcon';
 import { CarouselChevronRightIcon } from '../../icons/CarouselChevronRightIcon';
-// FIX: Import both female and male placeholder images
 import { NEW_FEMALE_PROFILE_IMAGE_URL, NEW_MALE_PROFILE_IMAGE_URL } from '../../../constants';
 import { MembershipBadge } from '../../common/MembershipBadge';
 import UpgradePrompt from '../../common/UpgradePrompt';
@@ -40,7 +39,6 @@ const ProfileViewModal: React.FC<ProfileViewModalProps> = ({ profile, isOpen, on
 
   if (!isOpen || !profile) return null;
 
-  // FIX: Replaced undefined variables with imported constants
   const displayPhotoUrl = profile.photoUrl ? profile.photoUrl : (profile.gender === Gender.FEMALE ? NEW_FEMALE_PROFILE_IMAGE_URL : NEW_MALE_PROFILE_IMAGE_URL);
   const gallery = [displayPhotoUrl, ...(profile.galleryImages || []).filter(img => img !== displayPhotoUrl)];
   

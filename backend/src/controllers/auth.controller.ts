@@ -1,4 +1,3 @@
-// FIX: Import express types to resolve property access errors.
 import { Request, Response, NextFunction } from 'express';
 import { validationResult } from 'express-validator';
 import jwt from 'jsonwebtoken';
@@ -9,22 +8,18 @@ import { generateOTP } from '../utils/otp.js';
 
 // @desc    Register a new user and send OTP
 // @route   POST /api/auth/register
-// FIX: Property 'status' does not exist on type 'Response'. Using explicit express types to resolve conflicts.
 export const register = async (req: Request, res: Response, next: NextFunction) => {
   try {
     const errors = validationResult(req);
     if (!errors.isEmpty()) {
-      // FIX: Property 'status' does not exist on type 'Response'.
       return res.status(400).json({ errors: errors.array() });
     }
 
-    // FIX: Property 'body' does not exist on type 'Request'.
     const { fullName, email, password } = req.body;
 
     let user = await User.findOne({ email });
 
     if (user && user.isVerified) {
-      // FIX: Property 'status' does not exist on type 'Response'.
       return res.status(400).json({ msg: 'User with this email already exists and is verified.' });
     }
 
@@ -51,7 +46,6 @@ export const register = async (req: Request, res: Response, next: NextFunction) 
       html: `<h3>Your One-Time Password (OTP) is:</h3><h1>${otp}</h1><p>It is valid for 10 minutes.</p>`,
     });
 
-    // FIX: Property 'status' does not exist on type 'Response'.
     res.status(201).json({ msg: 'Registration successful. Please check your email for an OTP to verify your account.' });
 
   } catch (err) {
@@ -65,35 +59,27 @@ export const verifyOtp = async (req: Request, res: Response, next: NextFunction)
   try {
     const errors = validationResult(req);
     if (!errors.isEmpty()) {
-      // FIX: Property 'status' does not exist on type 'Response'.
       return res.status(400).json({ errors: errors.array() });
     }
 
-    // FIX: Property 'body' does not exist on type 'Request'.
     const { email, otp } = req.body;
 
     const user = await User.findOne({ email }).select('+otp +otpExpiry');
 
     if (!user) {
-      // FIX: Property 'status' does not exist on type 'Response'.
       return res.status(400).json({ msg: 'Invalid credentials or user not found.' });
     }
     if (user.isVerified) {
-      // FIX: Property 'status' does not exist on type 'Response'.
       return res.status(400).json({ msg: 'Account is already verified. Please log in.' });
     }
     if (!user.otp || !user.otpExpiry) {
-      // FIX: Property 'status' does not exist on type 'Response'.
       return res.status(400).json({ msg: 'No pending OTP found. Please register or resend OTP.' });
     }
     if (user.otpExpiry < new Date()) {
-      // FIX: Property 'status' does not exist on type 'Response'.
       return res.status(400).json({ msg: 'OTP has expired. Please request a new one.' });
     }
     
-    // FIX: Logic error. The OTP is not hashed, so a direct comparison is needed instead of bcrypt.
     if (user.otp !== otp) {
-      // FIX: Property 'status' does not exist on type 'Response'.
       return res.status(400).json({ msg: 'Invalid OTP.' });
     }
 
@@ -105,15 +91,13 @@ export const verifyOtp = async (req: Request, res: Response, next: NextFunction)
     await user.save();
 
     // Sign JWT
-    // FIX: Property 'id' does not exist on type 'IUser'. Use '_id' instead.
     const payload = { user: { id: user.id } };
-    // FIX: No overload matches this call. Ensure JWT_SECRET is defined before use.
-    if (!process.env.JWT_SECRET) {
-        throw new Error('JWT_SECRET not defined');
+    const jwtSecret = process.env.JWT_SECRET;
+    if (!jwtSecret) {
+        throw new Error('JWT_SECRET is not defined in environment variables.');
     }
-    const token = jwt.sign(payload, process.env.JWT_SECRET, { expiresIn: process.env.JWT_EXPIRES_IN || '7d' });
+    const token = jwt.sign(payload, jwtSecret, { expiresIn: process.env.JWT_EXPIRES_IN || '7d' });
 
-    // FIX: Property 'status' does not exist on type 'Response'.
     res.status(200).json({ token });
 
   } catch (err) {
@@ -127,28 +111,23 @@ export const login = async (req: Request, res: Response, next: NextFunction) => 
   try {
     const errors = validationResult(req);
     if (!errors.isEmpty()) {
-      // FIX: Property 'status' does not exist on type 'Response'.
       return res.status(400).json({ errors: errors.array() });
     }
 
-    // FIX: Property 'body' does not exist on type 'Request'.
     const { email, password } = req.body;
 
     const user = await User.findOne({ email }).select('+password');
 
     if (!user) {
-      // FIX: Property 'status' does not exist on type 'Response'.
       return res.status(400).json({ msg: 'Invalid credentials.' });
     }
 
     if (!user.isVerified) {
-      // FIX: Property 'status' does not exist on type 'Response'.
       return res.status(400).json({ msg: 'Account not verified. Please verify your OTP first or resend it.' });
     }
 
     const isMatch = await user.comparePassword(password);
     if (!isMatch) {
-      // FIX: Property 'status' does not exist on type 'Response'.
       return res.status(400).json({ msg: 'Invalid credentials.' });
     }
 
@@ -157,15 +136,13 @@ export const login = async (req: Request, res: Response, next: NextFunction) => 
     user.lastLoginIP = req.ip; // Or req.headers['x-forwarded-for'] if behind a proxy
     await user.save();
     
-    // FIX: Property 'id' does not exist on type 'IUser'. Use '_id' instead.
     const payload = { user: { id: user.id } };
-    // FIX: No overload matches this call. Ensure JWT_SECRET is defined before use.
-    if (!process.env.JWT_SECRET) {
-        throw new Error('JWT_SECRET not defined');
+    const jwtSecret = process.env.JWT_SECRET;
+    if (!jwtSecret) {
+        throw new Error('JWT_SECRET is not defined in environment variables.');
     }
-    const token = jwt.sign(payload, process.env.JWT_SECRET, { expiresIn: process.env.JWT_EXPIRES_IN || '7d' });
+    const token = jwt.sign(payload, jwtSecret, { expiresIn: process.env.JWT_EXPIRES_IN || '7d' });
 
-    // FIX: Property 'status' does not exist on type 'Response'.
     res.status(200).json({ token });
 
   } catch (err) {
@@ -180,19 +157,15 @@ export const resendOtp = async (req: Request, res: Response, next: NextFunction)
   try {
     const errors = validationResult(req);
     if (!errors.isEmpty()) {
-      // FIX: Property 'status' does not exist on type 'Response'.
       return res.status(400).json({ errors: errors.array() });
     }
-    // FIX: Property 'body' does not exist on type 'Request'.
     const { email } = req.body;
     const user = await User.findOne({ email });
 
     if (!user) {
-      // FIX: Property 'status' does not exist on type 'Response'.
       return res.status(404).json({ msg: "User with this email not found. Please register first." });
     }
     if (user.isVerified) {
-      // FIX: Property 'status' does not exist on type 'Response'.
       return res.status(400).json({ msg: "This account is already verified. You can log in." });
     }
 
@@ -208,7 +181,6 @@ export const resendOtp = async (req: Request, res: Response, next: NextFunction)
       html: `<h3>Your new One-Time Password (OTP) is:</h3><h1>${otp}</h1><p>It is valid for 10 minutes.</p>`,
     });
 
-    // FIX: Property 'status' does not exist on type 'Response'.
     res.status(200).json({ msg: "A new OTP has been sent to your email address." });
 
   } catch (err) {

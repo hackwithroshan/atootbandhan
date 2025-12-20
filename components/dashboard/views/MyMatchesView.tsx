@@ -8,7 +8,8 @@ import ProfileViewModal from '../matches/ProfileViewModal';
 import { Gender, MembershipTier, UserFeatures, MatchProfile } from '../../../types';
 import { MembershipBadge } from '../../common/MembershipBadge';
 import UpgradePrompt from '../../common/UpgradePrompt';
-import { API_URL } from '../../../utils/config';
+import apiClient from '../../../utils/apiClient';
+import { useToast } from '../../../hooks/useToast';
 import { NEW_FEMALE_PROFILE_IMAGE_URL, NEW_MALE_PROFILE_IMAGE_URL } from '../../../constants';
 
 const filterOptions = {
@@ -84,6 +85,7 @@ const MyMatchesView: React.FC<MyMatchesViewProps> = ({ loggedInUserGender, userF
   const [matches, setMatches] = useState<MatchProfile[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const { showToast } = useToast();
   const [filters, setFilters] = useState({ age: '', location: '', religion: '' });
   const [selectedProfile, setSelectedProfile] = useState<MatchProfile | null>(null);
   const [isProfileModalOpen, setIsProfileModalOpen] = useState(false);
@@ -91,53 +93,39 @@ const MyMatchesView: React.FC<MyMatchesViewProps> = ({ loggedInUserGender, userF
 
   useEffect(() => {
     const fetchMatches = async () => {
-      // Fetching logic from previous step...
       setIsLoading(true);
       setError(null);
-      const token = localStorage.getItem('token');
       try {
-        const res = await fetch(`${API_URL}/api/matches`, { headers: { 'x-auth-token': token || '' } });
-        if (!res.ok) throw new Error('Failed to fetch matches.');
-        const data = await res.json();
+        const data = await apiClient('/api/matches');
         const formattedData = data.map((user: any): MatchProfile => ({
-            id: user._id, name: user.fullName, age: user.dateOfBirth ? new Date().getFullYear() - new Date(user.dateOfBirth).getFullYear() : 0, location: user.city || 'N/A',
+            id: user.id, name: user.fullName, age: user.dateOfBirth ? new Date().getFullYear() - new Date(user.dateOfBirth).getFullYear() : 0, location: user.city || 'N/A',
             profession: user.occupation || 'N/A', photoUrl: user.profilePhotoUrl, matchPercentage: user.matchPercentage || 0, religion: user.religion || 'N/A', caste: user.caste || 'N/A', education: user.education || 'N/A', gender: user.gender,
             membershipTier: user.membershipTier, bio: user.profileBio || 'No bio provided.', galleryImages: user.photos?.map((p: any) => p.url) || [], familyDetails: {}, preferencesBio: 'Not specified.', isContactVisible: false,
         }));
         setMatches(formattedData);
-      } catch (err: any) { setError(err.message); } finally { setIsLoading(false); }
+      } catch (err: any) { 
+          setError(err.message); 
+          showToast(err.message, 'error');
+      } finally { setIsLoading(false); }
     };
     fetchMatches();
-  }, []);
+  }, [showToast]);
 
   const handleSendInterest = async (profileId: string) => {
-    const token = localStorage.getItem('token');
     try {
-      const res = await fetch(`${API_URL}/api/interests/${profileId}`, {
-        method: 'POST',
-        headers: { 'x-auth-token': token || '' },
-      });
-      if (!res.ok) {
-        const data = await res.json();
-        throw new Error(data.msg || 'Failed to send interest.');
-      }
-      alert('Interest sent successfully!');
+      await apiClient(`/api/interests/${profileId}`, { method: 'POST' });
+      showToast('Interest sent successfully!', 'success');
     } catch (err: any) {
-      alert(`Error: ${err.message}`);
+      showToast(err.message, 'error');
     }
   };
 
   const handleShortlist = async (profileId: string) => {
-    const token = localStorage.getItem('token');
     try {
-      const res = await fetch(`${API_URL}/api/users/shortlist/${profileId}`, {
-        method: 'PUT',
-        headers: { 'x-auth-token': token || '' },
-      });
-      if (!res.ok) throw new Error('Failed to update shortlist.');
-      alert('Profile added to/removed from your shortlist!');
+      await apiClient(`/api/users/shortlist/${profileId}`, { method: 'PUT' });
+      showToast('Shortlist updated!', 'success');
     } catch (err: any) {
-      alert(`Error: ${err.message}`);
+      showToast(err.message, 'error');
     }
   };
 
@@ -167,14 +155,12 @@ const MyMatchesView: React.FC<MyMatchesViewProps> = ({ loggedInUserGender, userF
   const currentDisplayMatches = displayedMatches.slice((page - 1) * ITEMS_PER_PAGE, page * ITEMS_PER_PAGE);
   const canViewMoreMatches = userFeatures.matchesPerDay !== 'unlimited' && matches.length > userFeatures.matchesPerDay;
 
-  // The rest of the component's JSX remains largely the same
   if (isLoading) return <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">{[...Array(ITEMS_PER_PAGE)].map((_, i) => <SkeletonCard key={i} />)}</div>;
   if (error) return <div className="text-center text-red-500 bg-red-50 p-4 rounded-lg">{error}</div>;
 
   return (
     <div className="space-y-6">
       <h2 className="text-2xl font-semibold text-gray-800">My Matches for You ({displayedMatches.length})</h2>
-      {/* Filters... */}
       <div className="bg-white p-4 rounded-lg shadow-sm">
         <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3 items-end">
             <Select id="filter-age-matches" name="age" label="Age" options={filterOptions.age} value={filters.age} onChange={handleFilterChange} />
@@ -182,7 +168,6 @@ const MyMatchesView: React.FC<MyMatchesViewProps> = ({ loggedInUserGender, userF
             <Select id="filter-religion-matches" name="religion" label="Religion" options={filterOptions.religion} value={filters.religion} onChange={handleFilterChange}/>
         </div>
       </div>
-      {/* Match Cards... */}
       {currentDisplayMatches.length > 0 ? (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
           {currentDisplayMatches.map(profile => (
@@ -190,7 +175,6 @@ const MyMatchesView: React.FC<MyMatchesViewProps> = ({ loggedInUserGender, userF
           ))}
         </div>
       ) : <p className="text-center text-gray-500 py-10">No matches found with current filters.</p>}
-      {/* Pagination... */}
       {totalPages > 1 && !canViewMoreMatches && (
         <div className="flex justify-center items-center space-x-2 mt-6">
           <Button onClick={() => setPage(p => Math.max(1, p - 1))} disabled={page === 1} variant="secondary">Previous</Button>

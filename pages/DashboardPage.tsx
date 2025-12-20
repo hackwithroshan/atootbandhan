@@ -3,14 +3,14 @@ import DashboardHeader from '../components/dashboard/layout/DashboardHeader';
 import DashboardSidebar from '../components/dashboard/layout/DashboardSidebar';
 import OfferPopupModal from '../components/dashboard/common/OfferPopupModal'; 
 import ProfileDrawer, { ProfileDrawerProps } from '../components/dashboard/layout/ProfileDrawer'; 
-import { Offer, DashboardViewKey as AppDashboardViewKey, LoggedInUserSessionData, Gender, UserFeatures, MembershipTier } from '../types'; 
+import { Offer, DashboardViewKey as AppDashboardViewKey, LoggedInUserSessionData, Gender, UserFeatures, MembershipTier, MatchProfile } from '../types'; 
 import { getUserFeatures } from '../utils/featureAccess';
 import apiClient from '../utils/apiClient';
 import { useToast } from '../hooks/useToast';
 
 // Import all view components
 import DashboardHomeView from '../components/dashboard/views/DashboardHomeView';
-import { MyProfileView } from '../components/dashboard/views/MyProfileView'; // Corrected import
+import { MyProfileView } from '../components/dashboard/views/MyProfileView';
 import MyMatchesView from '../components/dashboard/views/MyMatchesView';
 import SearchMatchesView from '../components/dashboard/views/SearchMatchesView';
 import ExpressedInterestsView from '../components/dashboard/views/ExpressedInterestsView';
@@ -25,6 +25,7 @@ import AstrologyServicesView from '../components/dashboard/views/AstrologyServic
 import PhonebookView from '../components/dashboard/views/PhonebookView';
 import AccountSettingsView from '../components/dashboard/views/AccountSettingsView';
 import SafetyCentreView from '../components/dashboard/views/SafetyCentreView';
+import ProfileViewModal from '../components/dashboard/matches/ProfileViewModal';
 
 export type DashboardViewKey = AppDashboardViewKey; // Use the imported type
 
@@ -42,6 +43,9 @@ const DashboardPage: React.FC<DashboardPageProps> = ({ onLogout, loggedInUser })
 
   const [isProfileDrawerOpen, setIsProfileDrawerOpen] = useState(false);
   const { showToast } = useToast();
+
+  const [selectedProfile, setSelectedProfile] = useState<MatchProfile | null>(null);
+  const [isProfileModalOpen, setIsProfileModalOpen] = useState(false);
 
   const userFeatures = useMemo(() => getUserFeatures(loggedInUser.membershipTier), [loggedInUser.membershipTier]);
 
@@ -104,9 +108,33 @@ const DashboardPage: React.FC<DashboardPageProps> = ({ onLogout, loggedInUser })
     setShowOfferPopup(false);
   };
 
+  const handleViewProfile = (profile: MatchProfile) => {
+    if (!userFeatures.canViewFullProfiles) { navigateToMembership(); return; }
+    setSelectedProfile(profile);
+    setIsProfileModalOpen(true);
+  };
+  
+  const handleSendInterest = async (profileId: string) => {
+    try {
+      await apiClient(`/api/interests/${profileId}`, { method: 'POST' });
+      showToast('Interest sent successfully!', 'success');
+    } catch (err: any) {
+      showToast(err.message, 'error');
+    }
+  };
+
+  const handleShortlist = async (profileId: string) => {
+    try {
+      await apiClient(`/api/users/shortlist/${profileId}`, { method: 'PUT' });
+      showToast('Profile added/removed from shortlist.', 'success');
+    } catch (err: any) {
+      showToast(err.message, 'error');
+    }
+  };
+
   const renderActiveView = () => {
     switch (activeView) {
-      case 'DashboardHome': return <DashboardHomeView userFeatures={userFeatures} onUpgradeClick={navigateToMembership}/>;
+      case 'DashboardHome': return <DashboardHomeView loggedInUser={loggedInUser} userFeatures={userFeatures} onUpgradeClick={navigateToMembership} setActiveView={setActiveView} onViewProfile={handleViewProfile} onSendInterest={handleSendInterest} onShortlist={handleShortlist} />;
       case 'MyProfile': return <MyProfileView loggedInUser={loggedInUser} userFeatures={userFeatures} onUpgradeClick={navigateToMembership} />;
       case 'MyMatches': return <MyMatchesView loggedInUserGender={loggedInUser.gender} userFeatures={userFeatures} onUpgradeClick={navigateToMembership} />;
       case 'SearchMatches': return <SearchMatchesView userFeatures={userFeatures} onUpgradeClick={navigateToMembership} />;
@@ -122,7 +150,7 @@ const DashboardPage: React.FC<DashboardPageProps> = ({ onLogout, loggedInUser })
       case 'AccountSettings': return <AccountSettingsView />;
       case 'SafetyCentre': return <SafetyCentreView />;
       default:
-        return <DashboardHomeView userFeatures={userFeatures} onUpgradeClick={navigateToMembership} />;
+        return <DashboardHomeView loggedInUser={loggedInUser} userFeatures={userFeatures} onUpgradeClick={navigateToMembership} setActiveView={setActiveView} onViewProfile={handleViewProfile} onSendInterest={handleSendInterest} onShortlist={handleShortlist} />;
     }
   };
 
@@ -152,6 +180,7 @@ const DashboardPage: React.FC<DashboardPageProps> = ({ onLogout, loggedInUser })
           toggleSidebar={toggleSidebar} 
           toggleProfileDrawer={toggleProfileDrawer} 
           userPhotoUrl={mockUserForDrawer.photoUrl} 
+          setActiveView={setActiveView}
         />
         <main className="flex-1 overflow-x-hidden overflow-y-auto bg-gray-100 p-4 md:p-6 lg:p-8 custom-scrollbar">
           {renderActiveView()}
@@ -163,6 +192,18 @@ const DashboardPage: React.FC<DashboardPageProps> = ({ onLogout, loggedInUser })
       )}
 
       <ProfileDrawer {...profileDrawerProps} />
+      
+      {isProfileModalOpen && selectedProfile && (
+        <ProfileViewModal 
+            profile={selectedProfile} 
+            isOpen={isProfileModalOpen} 
+            onClose={() => setIsProfileModalOpen(false)} 
+            userFeatures={userFeatures} 
+            onUpgradeClick={navigateToMembership} 
+            onSendInterest={handleSendInterest} 
+            onShortlist={handleShortlist} 
+        />
+      )}
     </div>
   );
 };

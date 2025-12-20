@@ -13,7 +13,8 @@ import ProfileViewModal from '../matches/ProfileViewModal';
 import { Interest, InterestStatus, InterestUser, UserFeatures, MatchProfile } from '../../../types'; 
 import { MembershipBadge } from '../../common/MembershipBadge';
 import UpgradePrompt from '../../common/UpgradePrompt'; 
-import { API_URL } from '../../../utils/config';
+import apiClient from '../../../utils/apiClient';
+import { useToast } from '../../../hooks/useToast';
 
 const ITEMS_PER_PAGE = 5;
 
@@ -45,18 +46,18 @@ const InterestCard: React.FC<InterestCardProps> = ({ interest, type, onAction, u
         <span className={`text-xs font-medium px-2 py-0.5 rounded-full inline-block mt-1 ${getStatusClass(interest.status)}`}>{interest.status}</span>
       </div>
       <div className="flex flex-col sm:flex-row space-y-2 sm:space-y-0 sm:space-x-2">
-        <Button variant="secondary" size="sm" className="!text-xs" onClick={() => onAction('viewProfile', interest._id, user)}>Profile</Button>
+        <Button variant="secondary" size="sm" className="!text-xs" onClick={() => onAction('viewProfile', interest.id, user)}>Profile</Button>
         {type === 'received' && interest.status === InterestStatus.PENDING && (
           <>
-            <Button variant="primary" size="sm" className="!text-xs !bg-green-500" onClick={() => onAction('accept', interest._id, user)}>Accept</Button>
-            <Button variant="danger" size="sm" className="!text-xs" onClick={() => onAction('decline', interest._id, user)}>Decline</Button>
+            <Button variant="primary" size="sm" className="!text-xs !bg-green-500" onClick={() => onAction('accept', interest.id, user)}>Accept</Button>
+            <Button variant="danger" size="sm" className="!text-xs" onClick={() => onAction('decline', interest.id, user)}>Decline</Button>
           </>
         )}
         {interest.status === InterestStatus.ACCEPTED || interest.status === InterestStatus.MUTUAL && (
-          <Button variant="primary" size="sm" className="!text-xs !bg-rose-500" onClick={() => onAction('message', interest._id, user)} disabled={!userFeatures.canChat}>Message</Button>
+          <Button variant="primary" size="sm" className="!text-xs !bg-rose-500" onClick={() => onAction('message', interest.id, user)} disabled={!userFeatures.canChat}>Message</Button>
         )}
         {type === 'sent' && interest.status === InterestStatus.PENDING && (
-          <Button variant="secondary" size="sm" className="!text-xs" onClick={() => onAction('withdraw', interest._id, user)}>Withdraw</Button>
+          <Button variant="secondary" size="sm" className="!text-xs" onClick={() => onAction('withdraw', interest.id, user)}>Withdraw</Button>
         )}
       </div>
     </div>
@@ -79,26 +80,24 @@ const ExpressedInterestsView: React.FC<ExpressedInterestsViewProps> = ({ userFea
   const [page, setPage] = useState(1);
   const [selectedProfile, setSelectedProfile] = useState<MatchProfile | null>(null);
   const [isProfileModalOpen, setIsProfileModalOpen] = useState(false);
+  const { showToast } = useToast();
 
   const fetchInterests = useCallback(async () => {
     setIsLoading(true);
-    const token = localStorage.getItem('token');
     try {
-      const [sentRes, receivedRes] = await Promise.all([
-        fetch(`${API_URL}/api/interests/sent`, { headers: { 'x-auth-token': token || '' } }),
-        fetch(`${API_URL}/api/interests/received`, { headers: { 'x-auth-token': token || '' } }),
+      const [sentData, receivedData] = await Promise.all([
+        apiClient('/api/interests/sent'),
+        apiClient('/api/interests/received'),
       ]);
-      if (!sentRes.ok || !receivedRes.ok) throw new Error('Failed to fetch interests.');
-      const sentData = await sentRes.json();
-      const receivedData = await receivedRes.json();
       setSentInterests(sentData);
       setReceivedInterests(receivedData);
     } catch (err: any) {
       setError(err.message);
+      showToast(err.message, 'error');
     } finally {
       setIsLoading(false);
     }
-  }, []);
+  }, [showToast]);
 
   useEffect(() => {
     fetchInterests();
@@ -106,31 +105,27 @@ const ExpressedInterestsView: React.FC<ExpressedInterestsViewProps> = ({ userFea
 
   const handleAction = async (action: 'accept' | 'decline' | 'withdraw' | 'viewProfile' | 'message', interestId: string, userProfile: InterestUser) => {
     if (action === 'viewProfile') {
-// Ensure the created object for the modal matches the expected type.
         const profileForModal: MatchProfile = { ...userProfile, id: userProfile.id || interestId, matchPercentage: 0, name: userProfile.name || 'Unknown', age: userProfile.age || 0, photoUrl: userProfile.photoUrl || null, location: userProfile.location || '' };
         setSelectedProfile(profileForModal);
         setIsProfileModalOpen(true);
         return;
     }
      if (action === 'message') {
-        alert(`Navigating to messages with ${userProfile.name}. (This needs full router implementation)`);
+        showToast(`Navigating to messages with ${userProfile.name}. (This needs full router implementation)`, 'info');
         return;
     }
     
-    const token = localStorage.getItem('token');
     const newStatus = action === 'accept' ? InterestStatus.ACCEPTED : action === 'decline' ? InterestStatus.DECLINED : InterestStatus.WITHDRAWN;
     
     try {
-        const res = await fetch(`${API_URL}/api/interests/${interestId}`, {
+        await apiClient(`/api/interests/${interestId}`, {
             method: 'PUT',
-            headers: { 'Content-Type': 'application/json', 'x-auth-token': token || '' },
-            body: JSON.stringify({ status: newStatus }),
+            body: { status: newStatus },
         });
-        if (!res.ok) throw new Error(`Failed to ${action} interest.`);
         await fetchInterests(); // Re-fetch all interests to update UI
-        alert(`Interest ${action}ed successfully.`);
+        showToast(`Interest ${action}ed successfully.`, 'success');
     } catch (err: any) {
-        alert(`Error: ${err.message}`);
+        showToast(err.message, 'error');
     }
   };
 
@@ -156,7 +151,7 @@ const ExpressedInterestsView: React.FC<ExpressedInterestsViewProps> = ({ userFea
       {currentDisplayData.length > 0 ? (
         <div className="space-y-4">
           {currentDisplayData.map(interest => (
-            <InterestCard key={interest._id} interest={interest} type={activeTab} onAction={handleAction} userFeatures={userFeatures} onUpgradeClick={onUpgradeClick}/>
+            <InterestCard key={interest.id} interest={interest} type={activeTab} onAction={handleAction} userFeatures={userFeatures} onUpgradeClick={onUpgradeClick}/>
           ))}
         </div>
       ) : <p className="text-center text-gray-500 py-10">No interests to display in this category.</p>}

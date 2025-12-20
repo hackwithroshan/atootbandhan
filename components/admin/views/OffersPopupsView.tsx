@@ -33,8 +33,7 @@ const OffersPopupsView: React.FC = () => {
     setIsLoading(true);
     try {
       const data = await apiClient('/api/content/offers/all');
-      // The backend returns _id, frontend uses id. Let's map it.
-      setOffers(data.map((o: any) => ({ ...o, id: o._id })));
+      setOffers(data);
     } catch (error: any) {
       showToast(error.message, 'error');
     } finally {
@@ -67,7 +66,7 @@ const OffersPopupsView: React.FC = () => {
         });
         showToast('New offer created successfully!', 'success');
       }
-      await fetchOffers(); // Refresh the list
+      await fetchOffers();
       setFormData(initialOfferFormData);
       setEditingOffer(null);
       setShowAddForm(false);
@@ -84,8 +83,8 @@ const OffersPopupsView: React.FC = () => {
         description: offer.description,
         buttonText: offer.buttonText,
         link: offer.link,
-        startDate: offer.startDate.split('T')[0],
-        endDate: offer.endDate.split('T')[0],
+        startDate: new Date(offer.startDate).toISOString().split('T')[0],
+        endDate: new Date(offer.endDate).toISOString().split('T')[0],
         status: offer.status
     });
     setShowAddForm(true);
@@ -96,7 +95,7 @@ const OffersPopupsView: React.FC = () => {
       try {
         await apiClient(`/api/content/offers/${offerId}`, { method: 'DELETE' });
         showToast('Offer deleted successfully.', 'info');
-        await fetchOffers(); // Refresh the list
+        await fetchOffers();
       } catch (err: any) {
         showToast(err.message, 'error');
       }

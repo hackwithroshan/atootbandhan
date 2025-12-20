@@ -9,6 +9,7 @@ import contentRoutes from './routes/content.routes.js';
 import ticketRoutes from './routes/ticket.routes.js';
 import messageRoutes from './routes/message.routes.js';
 import adminRoutes from './routes/admin.routes.js';
+import paymentRoutes from './routes/payment.routes.js';
 import errorMiddleware from './middlewares/error.middleware.js';
 
 const app = express();
@@ -31,9 +32,9 @@ app.use('/api/content', contentRoutes);
 app.use('/api/tickets', ticketRoutes);
 app.use('/api/messages', messageRoutes);
 app.use('/api/admin', adminRoutes);
+app.use('/api/payments', paymentRoutes);
 
 // Global Error Handler Middleware (should be the last one)
-// FIX: No overload matches this call. This error is resolved by fixing the types in error.middleware.ts. No change is needed here, but the error on line 18 is now fixed.
 app.use(errorMiddleware);
 
 export default app;

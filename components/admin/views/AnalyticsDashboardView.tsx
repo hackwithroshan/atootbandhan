@@ -1,10 +1,13 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { ChartBarIcon } from '../../icons/ChartBarIcon';
 import { UserIcon } from '../../icons/UserIcon';
 import { PhotoIcon } from '../../icons/PhotoIcon'; // For photo stats
 import { CurrencyDollarIcon } from '../../icons/CurrencyDollarIcon'; // For revenue/conversion
 import { EyeIcon } from '../../icons/EyeIcon'; // For view counts
-import Button from '../../ui/Button'; // Added import
+import Button from '../../ui/Button';
+import { AnalyticsStats, LoginAttempt } from '../../../types';
+import apiClient from '../../../utils/apiClient';
+import { useToast } from '../../../hooks/useToast';
 
 
 // Mock icons if they don't exist
@@ -21,21 +24,49 @@ const ArrowsRightLeftIcon = (props: React.SVGProps<SVGSVGElement>) => (
 
 
 const AnalyticsDashboardView: React.FC = () => {
-  const mockAnalyticsData = [
-    { label: 'Daily Signups', value: '85', trend: '+8%', icon: <UserIcon className="w-6 h-6 text-green-400"/> },
-    { label: 'Daily Active Users (DAU)', value: '550', trend: '+5%', icon: <UserIcon className="w-6 h-6 text-teal-400"/> },
-    { label: 'Daily Logins', value: '720', trend: '+3%', icon: <UserIcon className="w-6 h-6 text-blue-400"/> },
-    { label: 'Match View Counts (Today)', value: '1,250', trend: '+10%', icon: <EyeIcon className="w-6 h-6 text-indigo-400"/> },
-    { label: 'Photo Upload Stats (Today)', value: '45 new', trend: '', icon: <PhotoIcon className="w-6 h-6 text-purple-400"/> },
-    { label: 'Payment Conversion Rate', value: '2.5%', trend: '+0.2%', icon: <CurrencyDollarIcon className="w-6 h-6 text-lime-400"/> },
-    { label: 'Bounce Rate', value: '35%', trend: '+1%', icon: <ArrowTrendingUpIcon className="w-6 h-6 text-red-400 transform scale-y-[-1]"/> }, // Trend icon implies change
-    { label: 'Avg. Session Duration', value: '12 min', trend: '-2%', icon: <ChartBarIcon className="w-6 h-6 text-orange-400"/> },
+  const [stats, setStats] = useState<AnalyticsStats | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
+  const { showToast } = useToast();
+
+  useEffect(() => {
+    const fetchAnalytics = async () => {
+      setIsLoading(true);
+      try {
+        const data = await apiClient('/api/admin/analytics/stats');
+        setStats(data);
+      } catch (err: any) {
+        showToast(err.message, 'error');
+      } finally {
+        setIsLoading(false);
+      }
+    };
+    fetchAnalytics();
+  }, [showToast]);
+
+  const analyticsData = [
+    { label: 'Daily Signups', value: stats?.dailySignups.toLocaleString() ?? '0', trend: '', icon: <UserIcon className="w-6 h-6 text-green-400"/> },
+    { label: 'Daily Active Users (DAU)', value: stats?.dailyActiveUsers.toLocaleString() ?? '0', trend: '', icon: <UserIcon className="w-6 h-6 text-teal-400"/> },
+    { label: 'Daily Logins', value: stats?.dailyLogins.toLocaleString() ?? '0', trend: '', icon: <UserIcon className="w-6 h-6 text-blue-400"/> },
+    { label: 'Match View Counts (Today)', value: stats?.matchViewCountsToday?.toLocaleString() ?? '0', trend: '', icon: <EyeIcon className="w-6 h-6 text-indigo-400"/> },
+    { label: 'Photo Uploads (Today)', value: stats?.photoUploadsToday?.toLocaleString() ?? '0', trend: '', icon: <PhotoIcon className="w-6 h-6 text-purple-400"/>, note: "Proxy: New users with photo" },
+    { label: 'Payment Conversion Rate', value: stats?.paymentConversionRate ?? '0%', trend: '', icon: <CurrencyDollarIcon className="w-6 h-6 text-lime-400"/> },
+    { label: 'Bounce Rate', value: stats?.bounceRate ?? 'N/A', trend: '', icon: <ArrowTrendingUpIcon className="w-6 h-6 text-gray-400 transform scale-y-[-1]"/>, note: "Requires GA" },
+    { label: 'Avg. Session Duration', value: stats?.avgSessionDuration ?? 'N/A', trend: '', icon: <ChartBarIcon className="w-6 h-6 text-orange-400"/>, note: "Requires GA" },
   ];
-  
-  const mockSuspiciousLogins = [
-      { id: 'sl_001', userId: 'usr_temp01', ip: '203.0.113.100', location: 'Unknown Country', time: '2024-07-30 02:15 AM', reason: 'IP Mismatch' },
-      { id: 'sl_002', userId: 'usr_beta02', ip: '198.51.100.50', location: 'City, Different State', time: '2024-07-30 03:45 AM', reason: 'Unusual Login Time & Location' },
-  ];
+
+  if (isLoading) {
+    return (
+      <div className="flex justify-center items-center h-64">
+        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-rose-400"></div>
+        <p className="ml-4 text-lg text-gray-400">Loading Analytics Data...</p>
+      </div>
+    );
+  }
+
+  if (!stats) {
+    return <p className="text-center text-red-400">Failed to load analytics data. Please try again later.</p>;
+  }
+
 
   return (
     <div className="space-y-6 text-gray-100">
@@ -49,13 +80,14 @@ const AnalyticsDashboardView: React.FC = () => {
 
       {/* Key Metrics Grid */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-5">
-        {mockAnalyticsData.map(data => (
+        {analyticsData.map(data => (
           <div key={data.label} className="bg-gray-700 p-5 rounded-lg shadow-xl flex items-start space-x-3">
             <div className="p-2 bg-gray-800 rounded-full">{data.icon}</div>
             <div>
                 <p className="text-2xl font-semibold text-white my-0.5">{data.value}</p>
                 <p className="text-sm text-gray-400">{data.label}</p>
                 {data.trend && <p className={`text-xs mt-0.5 ${data.trend.startsWith('+') ? 'text-green-400' : 'text-red-400'}`}>{data.trend} vs last period</p>}
+                {data.note && <p className="text-[10px] text-gray-500 mt-1">{data.note}</p>}
             </div>
           </div>
         ))}
@@ -91,19 +123,18 @@ const AnalyticsDashboardView: React.FC = () => {
                 </tr>
             </thead>
             <tbody className="bg-gray-700 divide-y divide-gray-600">
-                {mockSuspiciousLogins.map(log => (
-                    <tr key={log.id} className="hover:bg-gray-650">
-                        <td className="px-4 py-3 whitespace-nowrap text-sm text-white">{log.userId}</td>
-                        <td className="px-4 py-3 whitespace-nowrap text-sm text-gray-300">{log.ip}</td>
+                {stats.suspiciousLogins.length > 0 ? stats.suspiciousLogins.map((log: any) => (
+                    <tr key={log.id || log.timestamp} className="hover:bg-gray-650">
+                        <td className="px-4 py-3 whitespace-nowrap text-sm text-white">{log.userId || 'N/A'}</td>
+                        <td className="px-4 py-3 whitespace-nowrap text-sm text-gray-300">{log.ipAddress}</td>
                         <td className="px-4 py-3 whitespace-nowrap text-sm text-gray-300">{log.location}</td>
-                        <td className="px-4 py-3 whitespace-nowrap text-sm text-gray-300">{log.time}</td>
-                        <td className="px-4 py-3 whitespace-nowrap text-sm text-yellow-400">{log.reason}</td>
+                        <td className="px-4 py-3 whitespace-nowrap text-sm text-gray-300">{new Date(log.timestamp).toLocaleString()}</td>
+                        <td className="px-4 py-3 whitespace-nowrap text-sm text-yellow-400">{log.status}</td>
                         <td className="px-4 py-3 whitespace-nowrap text-sm">
                             <Button size="sm" variant="secondary" className="!text-xs !py-1 !px-2 !bg-red-600 hover:!bg-red-700 !text-white" onClick={() => alert(`Investigating suspicious login for ${log.userId}`)}>Investigate</Button>
                         </td>
                     </tr>
-                ))}
-                 {mockSuspiciousLogins.length === 0 && (
+                )) : (
                     <tr><td colSpan={6} className="text-center py-6 text-gray-400">No suspicious login attempts flagged recently.</td></tr>
                 )}
             </tbody>

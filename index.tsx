@@ -1,7 +1,7 @@
 import React from 'react';
 import ReactDOM from 'react-dom/client';
 import App from './App';
-import { ToastProvider } from './hooks/useToast';
+import { ToastProvider, SocketProvider } from './hooks/useToast';
 import { ToastContainer } from './components/common/ToastContainer';
 
 const rootElement = document.getElementById('root');
@@ -13,7 +13,9 @@ const root = ReactDOM.createRoot(rootElement);
 root.render(
   <React.StrictMode>
     <ToastProvider>
-      <App />
+      <SocketProvider>
+        <App />
+      </SocketProvider>
       <ToastContainer />
     </ToastProvider>
   </React.StrictMode>
