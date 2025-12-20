@@ -87,16 +87,16 @@ router.post('/verify-otp', [check('email').isEmail(), check('otp').isLength({ mi
     try {
         // FIX: Property 'body' does not exist.
         const { email, otp } = req.body;
-        const user = await User.findOne({ email, emailOtp: otp, emailOtpExpires: { $gt: Date.now() } });
+        const user = await User.findOne({ email, otp: otp, otpExpiry: { $gt: Date.now() } });
         
         if (!user) {
             // FIX: Property 'status' does not exist.
             return res.status(400).json({ msg: 'Invalid or expired OTP. Please try again.' });
         }
         
-        (user as any).isEmailVerified = true;
-        (user as any).emailOtp = undefined;
-        (user as any).emailOtpExpires = undefined;
+        user.isVerified = true;
+        user.otp = undefined;
+        user.otpExpiry = undefined;
         await user.save();
         
         // FIX: Property 'status' does not exist.
@@ -117,7 +117,7 @@ router.post('/register', [], async (req: express.Request, res: express.Response)
       
         let user = await User.findOne({ email });
 
-        if (!user || !(user as any).isEmailVerified) {
+        if (!user || !user.isVerified) {
             // FIX: Property 'status' does not exist.
             return res.status(400).json({ msg: 'Email not verified. Please complete OTP verification first.' });
         }

@@ -5,7 +5,7 @@ import Select from '../../ui/Select';
 import { LifebuoyIcon } from '../../icons/LifebuoyIcon';
 import { TicketIcon } from '../../icons/TicketIcon';
 // FIX: Corrected import path casing for PaperclipIcon to match the actual filename.
-import { PaperclipIcon } from '../../icons/PaperclipIcon';
+import { PaperclipIcon } from '../../icons/PaperClipIcon';
 import { DocumentTextIcon } from '../../icons/DocumentTextIcon';
 import { QuestionMarkCircleIcon } from '../../icons/QuestionMarkCircleIcon';
 import { ChevronDownIcon } from '../../icons/ChevronDownIcon';

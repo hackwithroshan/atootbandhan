@@ -6,7 +6,7 @@ import { useToast, useSocket } from '../../../hooks/useToast';
 import apiClient from '../../../utils/apiClient';
 import { SupportTicket, SupportTicketStatus, SupportTicketMessage } from '../../../types';
 import { XMarkIcon } from '../../icons/XMarkIcon';
-import { PaperclipIcon } from '../../icons/PaperclipIcon';
+import { PaperclipIcon } from '../../icons/PaperClipIcon';
 import { DocumentTextIcon } from '../../icons/DocumentTextIcon';
 
 const MessagingComplaintsView: React.FC = () => {

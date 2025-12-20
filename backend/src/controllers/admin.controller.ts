@@ -17,7 +17,7 @@ import SearchLog from '../models/SearchLog.js';
 import Affiliate from '../models/Affiliate.js';
 import AdminAuditLog from '../models/AdminAuditLog.js';
 import { AuthRequest } from '../middlewares/auth.middleware.js';
-import { SupportTicketStatus, UserStatus, NotificationType } from '../../../types.js';
+import { SupportTicketStatus, UserStatus, NotificationType } from '../../types.js';
 // FIX: Added missing import for ABTest model.
 import ABTest from '../models/ABTest.js';
 
@@ -591,7 +591,7 @@ export const deleteSuccessStory = async (req: Request, res: Response, next: Next
 
 export const getComplaints = async (req: Request, res: Response, next: NextFunction) => {
     try {
-        const complaints = await Ticket.find({ category: 'Report Abuse/Spam' }).populate('user', 'fullName').sort({ createdAt: -1 });
+        const complaints = await Ticket.find().populate('user', 'fullName').sort({ lastUpdatedDate: -1 });
         res.json(complaints);
     } catch(err) {
         next(err);
@@ -615,7 +615,7 @@ export const resolveComplaint = async (req: AuthRequest, res: Response, next: Ne
             sender: 'admin',
             text: `Resolution: ${resolutionNotes}`,
             timestamp: new Date()
-        });
+        } as any);
         await ticket.save();
         
         const newLog = new AdminAuditLog({

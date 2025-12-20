@@ -1,13 +1,17 @@
-import React, { useState, useEffect } from 'react';
-import { CreditCardIcon } from '../../icons/CreditCardIcon';
+import React, { useMemo, useState, useEffect } from 'react';
 import Button from '../../ui/Button';
+import { CreditCardIcon } from '../../icons/CreditCardIcon';
+import { StarIcon } from '../../icons/StarIcon';
+import { CheckIcon } from '../../icons/CheckIcon';
+import { LockOpenIcon } from '../../icons/LockOpenIcon';
+import { XMarkIcon } from '../../icons/XMarkIcon';
+import { LoggedInUserSessionData, MembershipTier, Plan, PlanFeature } from '../../../types';
+import apiClient from '../../../utils/apiClient';
+import { useToast } from '../../../hooks/useToast';
+import { Coupon, DiscountType } from '../../../types';
+import { TrashIcon } from '../../icons/TrashIcon';
 import Input from '../../ui/Input';
 import Select from '../../ui/Select';
-import { useToast } from '../../../hooks/useToast';
-import apiClient from '../../../utils/apiClient';
-import { Coupon, DiscountType, Plan } from '../../../types';
-import { TrashIcon } from '../../icons/TrashIcon';
-import { XMarkIcon } from '../../icons/XMarkIcon';
 
 
 interface Transaction {
@@ -245,13 +249,13 @@ const MembershipPaymentsView: React.FC = () => {
                 </div>
                 <div className="flex-grow overflow-y-auto space-y-3 pr-2 custom-scrollbar">
                     {/* FIX: Added missing 'id' prop to Input component. */}
-                    <Input id="priceMonthlyDisplay" label="Price Monthly Display (e.g., ₹499 / month)" name="priceMonthlyDisplay" value={editablePlanData.priceMonthlyDisplay || ''} onChange={e => setEditablePlanData(p => ({...p, priceMonthlyDisplay: e.target.value}))} className="[&_label]:text-gray-400 [&_input]:bg-gray-700" />
+                    <Input id="edit-priceMonthlyDisplay" label="Price Monthly Display (e.g., ₹499 / month)" name="priceMonthlyDisplay" value={editablePlanData.priceMonthlyDisplay || ''} onChange={e => setEditablePlanData(p => ({...p, priceMonthlyDisplay: e.target.value}))} className="[&_label]:text-gray-400 [&_input]:bg-gray-700" />
                     {/* FIX: Added missing 'id' prop to Input component. */}
-                    <Input id="priceMonthly" type="number" label="Price Monthly (e.g., 499)" name="priceMonthly" value={String(editablePlanData.priceMonthly || 0)} onChange={e => setEditablePlanData(p => ({...p, priceMonthly: Number(e.target.value)}))} className="[&_label]:text-gray-400 [&_input]:bg-gray-700" />
+                    <Input id="edit-priceMonthly" type="number" label="Price Monthly (e.g., 499)" name="priceMonthly" value={String(editablePlanData.priceMonthly || 0)} onChange={e => setEditablePlanData(p => ({...p, priceMonthly: Number(e.target.value)}))} className="[&_label]:text-gray-400 [&_input]:bg-gray-700" />
                     {/* FIX: Added missing 'id' prop to Input component. */}
-                    <Input id="priceYearlyDisplay" label="Price Yearly Display (e.g., or ₹4999 / year)" name="priceYearlyDisplay" value={editablePlanData.priceYearlyDisplay || ''} onChange={e => setEditablePlanData(p => ({...p, priceYearlyDisplay: e.target.value}))} className="[&_label]:text-gray-400 [&_input]:bg-gray-700" />
+                    <Input id="edit-priceYearlyDisplay" label="Price Yearly Display (e.g., or ₹4999 / year)" name="priceYearlyDisplay" value={editablePlanData.priceYearlyDisplay || ''} onChange={e => setEditablePlanData(p => ({...p, priceYearlyDisplay: e.target.value}))} className="[&_label]:text-gray-400 [&_input]:bg-gray-700" />
                     {/* FIX: Added missing 'id' prop to Input component. */}
-                    <Input id="priceYearly" type="number" label="Price Yearly (e.g., 4999)" name="priceYearly" value={String(editablePlanData.priceYearly || 0)} onChange={e => setEditablePlanData(p => ({...p, priceYearly: Number(e.target.value)}))} className="[&_label]:text-gray-400 [&_input]:bg-gray-700" />
+                    <Input id="edit-priceYearly" type="number" label="Price Yearly (e.g., 4999)" name="priceYearly" value={String(editablePlanData.priceYearly || 0)} onChange={e => setEditablePlanData(p => ({...p, priceYearly: Number(e.target.value)}))} className="[&_label]:text-gray-400 [&_input]:bg-gray-700" />
                     <div>
                         <label className="block text-sm font-medium text-gray-400 mb-1">Features (format: text|true/false)</label>
                         <textarea rows={8} name="features" value={editablePlanData.features as any || ''} onChange={e => setEditablePlanData(p => ({...p, features: e.target.value as any}))} className="w-full bg-gray-700 p-2 rounded border border-gray-600 text-sm font-mono custom-scrollbar" />

@@ -187,3 +187,57 @@ export const resendOtp = async (req: Request, res: Response, next: NextFunction)
     next(err);
   }
 };
+
+// @desc    Forgot password - send reset OTP
+// @route   POST /api/auth/forgot-password
+export const forgotPassword = async (req: Request, res: Response, next: NextFunction) => {
+    try {
+        const { email } = req.body;
+        const user = await User.findOne({ email });
+        if (!user) {
+            return res.status(404).json({ msg: 'User with that email does not exist.' });
+        }
+
+        const otp = generateOTP();
+        user.resetPasswordOtp = otp;
+        user.resetPasswordOtpExpires = new Date(Date.now() + 10 * 60 * 1000); // 10 minutes
+        await user.save();
+
+        await sendEmail({
+            to: email,
+            subject: 'Your Password Reset OTP',
+            html: `<h3>Your password reset OTP is:</h3><h1>${otp}</h1><p>It is valid for 10 minutes.</p>`,
+        });
+
+        res.status(200).json({ msg: 'Password reset OTP has been sent to your email.' });
+    } catch (err) {
+        next(err);
+    }
+};
+
+// @desc    Reset password with OTP
+// @route   POST /api/auth/reset-password
+export const resetPassword = async (req: Request, res: Response, next: NextFunction) => {
+    try {
+        const { email, otp, newPassword } = req.body;
+        
+        const user = await User.findOne({
+            email,
+            resetPasswordOtp: otp,
+            resetPasswordOtpExpires: { $gt: new Date() },
+        });
+
+        if (!user) {
+            return res.status(400).json({ msg: 'Invalid or expired OTP.' });
+        }
+
+        user.password = newPassword;
+        user.resetPasswordOtp = undefined;
+        user.resetPasswordOtpExpires = undefined;
+        await user.save();
+        
+        res.status(200).json({ msg: 'Password has been reset successfully.' });
+    } catch (err) {
+        next(err);
+    }
+};
